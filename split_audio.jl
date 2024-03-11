@@ -9,7 +9,7 @@ function dividir_audio(input_file::AbstractString, output_folder::AbstractString
     num_segments = ceil(Int, total_samples / (segment_length - overlap))
 
     # Iterar sobre los segmentos y extraerlos
-    for i in 1:num_segments
+    for i in 1:num_segments-1
         # Calcular los índices de inicio y fin para cada segmento
         start_index = (i - 1) * (segment_length - overlap) + 1
         end_index = min(start_index + segment_length - 1, total_samples)
@@ -22,6 +22,12 @@ function dividir_audio(input_file::AbstractString, output_folder::AbstractString
         output_file = joinpath(output_folder, "segmento_$i.wav")
         wavwrite(segment, output_file, Fs=sample_rate)
     end
+        start_index = (total_samples - segment_length) + 1
+        end_index = total_samples
+        segment = zeros(segment_length)
+        segment[1:end_index - start_index + 1] = audio[start_index:end_index]
+        output_file = joinpath(output_folder, "segmento_$num_segments.wav")
+        wavwrite(segment, output_file, Fs=sample_rate)
 end
 
 # Ejemplo de uso
