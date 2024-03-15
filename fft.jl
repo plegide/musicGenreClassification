@@ -22,22 +22,22 @@ function audioFft(audio_file_path::AbstractString, genre::AbstractString)
         touch(file_path)
     end
     open(file_path, "a") do file
-        write(file, "$(mean(senalFrecuencia)), $(std(senalFrecuencia)), $(genre)\n")
+        write(file, "$(mean(senalFrecuencia)),$(std(senalFrecuencia)),$(genre)\n")
     end
 end;
 
 println("[!] Processing audio files")
 
-genres = readdir("segmentos/")
+genres = readdir("segments")
 
 for genre in genres
-    if(isdir(joinpath("segmentos", genre)) == false)
+    if(isdir(joinpath("segments", genre)) == false)
         continue
     end
-    for audio in readdir(joinpath("segmentos", genre))
+    for audio in readdir(joinpath("segments", genre))
         if endswith(audio, ".wav")
             try
-                audioFft(joinpath("segmentos", genre, audio), genre)
+                audioFft(joinpath("segments", genre, audio), genre)
             catch
                 println("[x] Error processing $(audio)")
             end

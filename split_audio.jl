@@ -33,7 +33,7 @@ end
 println("[!] Processing audio files")
 
 for genre in readdir("genres")
-    if(isdir(joinpath("segmentos", genre)) == false)
+    if(isdir(joinpath("genres", genre)) == false)
         continue
     end
     println("Procesando $(genre)...")
