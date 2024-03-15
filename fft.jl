@@ -1,54 +1,49 @@
-
 using FFTW
 using Statistics
+using WAV
+using FileIO
 
-# Frecuencia de muestreo, por ejemplo: 100 Hz
-Fs = 22050;
-# Numero de muestras
-n = 200;
-# Que frecuenicas queremos coger
-f1 = 10; f2 = 20;
+function audioFft(audio_file_path::AbstractString, genre::AbstractString)
+    audio_data, Fs = wavread(audio_file_path)
 
-println("$(n) muestras con una frecuencia de $(Fs) muestras/seg: $(n/Fs) seg.")
+    n = length(audio_data)
+    senalFrecuencia = abs.(fft(audio_data));
 
-# Creamos una señal de n muestras: es un array de flotantes
-x = 1:n;
-senalTiempo = sin.(x)./x;
+    if (iseven(n))
+        @assert(mean(abs.(senalFrecuencia[2:Int(n/2)] .- senalFrecuencia[end:-1:(Int(n/2)+2)]))<1e-8);
+        senalFrecuencia = senalFrecuencia[1:(Int(n/2)+1)];
+    else
+        @assert(mean(abs.(senalFrecuencia[2:Int((n+1)/2)] .- senalFrecuencia[end:-1:(Int((n-1)/2)+2)]))<1e-8);
+        senalFrecuencia = senalFrecuencia[1:(Int((n+1)/2))];
+    end;
 
-# Representamos la señal
-using Plots; plotlyjs();
-graficaTiempo = plot(x, senalTiempo, label = "", xaxis = x);
-
-# Hallamos la FFT y tomamos el valor absoluto
-senalFrecuencia = abs.(fft(senalTiempo));
-
-
-
-# Los valores absolutos de la primera mitad de la señal deberian de ser iguales a los de la segunda mitad, salvo errores de redondeo
-# Esto se puede ver en la grafica:
-graficaFrecuencia = plot(senalFrecuencia, label = "");
-#  pero ademas lo comprobamos en el codigo
-if (iseven(n))
-    @assert(mean(abs.(senalFrecuencia[2:Int(n/2)] .- senalFrecuencia[end:-1:(Int(n/2)+2)]))<1e-8);
-    senalFrecuencia = senalFrecuencia[1:(Int(n/2)+1)];
-else
-    @assert(mean(abs.(senalFrecuencia[2:Int((n+1)/2)] .- senalFrecuencia[end:-1:(Int((n-1)/2)+2)]))<1e-8);
-    senalFrecuencia = senalFrecuencia[1:(Int((n+1)/2))];
+    file_path = "genres.data"
+    if !isfile(file_path)
+        touch(file_path)
+    end
+    open(file_path, "a") do file
+        write(file, "$(mean(senalFrecuencia)), $(std(senalFrecuencia)), $(genre)\n")
+    end
 end;
 
-# Grafica con la primera mitad de la frecuencia:
-graficaFrecuenciaMitad = plot(senalFrecuencia, label = "");
+println("[!] Processing audio files")
 
+genres = readdir("segmentos/")
 
-# Representamos las 3 graficas juntas
-display(plot(graficaTiempo, graficaFrecuencia, graficaFrecuenciaMitad, layout = (3,1)));
+for genre in genres
+    if(isdir(joinpath("segmentos", genre)) == false)
+        continue
+    end
+    for audio in readdir(joinpath("segmentos", genre))
+        if endswith(audio, ".wav")
+            try
+                audioFft(joinpath("segmentos", genre, audio), genre)
+            catch
+                println("[x] Error processing $(audio)")
+            end
+        end
+    end
+end
 
-
-# A que muestras se corresponden las frecuencias indicadas
-#  Como limite se puede tomar la mitad de la frecuencia de muestreo
-m1 = Int(round(f1*2*length(senalFrecuencia)/Fs));
-m2 = Int(round(f2*2*length(senalFrecuencia)/Fs));
-
-# Unas caracteristicas en esa banda de frecuencias
-println("Media de la señal en frecuencia entre $(f1) y $(f2) Hz: ", mean(senalFrecuencia[m1:m2]));
-println("Desv tipica de la señal en frecuencia entre $(f1) y $(f2) Hz: ", std(senalFrecuencia[m1:m2]));
+println("[!] Finished processing audio files")
+println("[!] Generated genres.data file with audio features")
