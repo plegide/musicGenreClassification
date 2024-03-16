@@ -8,6 +8,7 @@ function oneHotEncoding(feature::AbstractArray{<:Any,1}, classes::AbstractArray{
         # Si solo hay dos clases, se devuelve una matriz con una columna
         feature = reshape(feature .== classes[1], :, 1)
     else
+        # Si hay mas clases devuelve true en la columna en la que se corresponde con su clase 
         oneHot = Array{Bool,2}(undef, length(feature), numClasses)
         for numClass = 1:numClasses
             oneHot[:, numClass] .= (feature .== classes[numClass])
@@ -137,6 +138,7 @@ function trainClassANN(topology::AbstractArray{<:Int,1}, trainingDataset::Tuple{
     inputs, targets = trainingDataset
     print(size(inputs), size(targets))
     # ann = buildClassANN(size(inputs, 2), topology, size(targets, 2), transferFunctions=transferFunctions)
+    # Definicion de la topologia de la ann
     ann = Chain( 
     Dense(2, 4, σ), 
     Dense(4, 1, σ) );
@@ -157,6 +159,7 @@ function trainClassANN(topology::AbstractArray{<:Int,1}, trainingDataset::Tuple{
         if epoch % maxEpochsVal == 0
             valLoss = loss(ann, validationDataset...)
             if valLoss < bestValLoss
+                # Este if se usa para devolver la mejor ann del entrenamiento
                 bestValLoss = valLoss
                 bestValLossEpoch = epoch
                 bestAnn = ann
@@ -169,6 +172,7 @@ end
 function trainClassANN(topology::AbstractArray{<:Int,1}, trainingDataset::Tuple{AbstractArray{<:Real,2}, AbstractArray{Bool,1}}; validationDataset::Tuple{AbstractArray{<:Real,2}, AbstractArray{Bool,1}}= (Array{eltype(trainingDataset[1]),2}(undef,0,0), falses(0)), testDataset::Tuple{AbstractArray{<:Real,2}, AbstractArray{Bool,1}}= (Array{eltype(trainingDataset[1]),2}(undef,0,0), falses(0)), transferFunctions::AbstractArray{<:Function,1}=fill(σ, length(topology)), maxEpochs::Int=1000, minLoss::Real=0.0, learningRate::Real=0.01, maxEpochsVal::Int=20)
     inputs, targets = trainingDataset
     # ann = buildClassANN(size(inputs, 2), topology, 1, transferFunctions=transferFunctions)
+    # Definicion de la topologia de la ann
     ann = Chain( 
     Dense(2, 4, σ), 
     Dense(4, 1, σ) );
@@ -189,6 +193,7 @@ function trainClassANN(topology::AbstractArray{<:Int,1}, trainingDataset::Tuple{
         if epoch % maxEpochsVal == 0
             valLoss = loss(ann, validationDataset...)
             if valLoss < bestValLoss
+                # Este if se usa para devolver la mejor ann del entrenamiento
                 bestValLoss = valLoss
                 bestValLossEpoch = epoch
                 bestAnn = ann
