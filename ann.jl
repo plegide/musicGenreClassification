@@ -1,4 +1,4 @@
-using Flux, Flux.Losses, DelimitedFiles, Plots, ProgressMeter, Random
+using Flux, Flux.Losses, DelimitedFiles, Plots, ProgressMeter, Random, Statistics
 
 
 function oneHotEncoding(feature::AbstractArray{<:Any,1}, classes::AbstractArray{<:Any,1})
@@ -67,6 +67,29 @@ function normalizeMinMax(dataset::AbstractArray{<:Real,2})
     return normalizeMinMax(dataset, normalizationParameters)
 end
 
+function classifyOutputs(outputs::AbstractArray{<:Real,1}; threshold::Real=0.5)
+    return outputs .≥ threshold
+end
+
+function classifyOutputs(outputs::Array{Float64,2}; dataInRows::Bool=true, 
+threshold::Float64=0.5)
+ numOutputs = size(outputs, dataInRows ? 2 : 1);
+ @assert(numOutputs!=2)
+ if numOutputs==1
+ return convert(Array{Bool,2}, outputs.>=threshold);
+ else
+ # Miramos donde esta el valor mayor de cada instancia con la funcion 
+findmax
+ (_,indicesMaxEachInstance) = findmax(outputs, dims= dataInRows ? 2 : 1);
+ outputsBoolean = Array{Bool,2}(falses(size(outputs)));
+ outputsBoolean[indicesMaxEachInstance] .= true;
+ # Comprobamos que efectivamente cada patron solo este clasificado en una
+clase
+ @assert(all(sum(outputsBoolean, dims=dataInRows ? 2 : 1).==1));
+ return outputsBoolean;
+ end;
+end;
+
 function accuracy(outputs::AbstractArray{Bool,1}, targets::AbstractArray{Bool,1})
     return mean(outputs .== targets)
 end
@@ -127,15 +150,20 @@ end
 
 function trainClassANN(topology::AbstractArray{<:Int,1}, trainingDataset::Tuple{AbstractArray{<:Real,2}, AbstractArray{Bool,2}}; validationDataset::Tuple{AbstractArray{<:Real,2}, AbstractArray{Bool,2}}= (Array{eltype(trainingDataset[1]),2}(undef,0,0), falses(0,0)), testDataset::Tuple{AbstractArray{<:Real,2}, AbstractArray{Bool,2}}= (Array{eltype(trainingDataset[1]),2}(undef,0,0), falses(0,0)), transferFunctions::AbstractArray{<:Function,1}=fill(σ, length(topology)), maxEpochs::Int=1000, minLoss::Real=0.0, learningRate::Real=0.01, maxEpochsVal::Int=20)
     inputs, targets = trainingDataset
-    ann = buildClassANN(size(inputs, 2), topology, size(targets, 2), transferFunctions=transferFunctions)
+    print(size(inputs), size(targets))
+    # ann = buildClassANN(size(inputs, 2), topology, size(targets, 2), transferFunctions=transferFunctions)
+    ann = Chain( 
+    Dense(2, 4, σ), 
+    Dense(4, 1, σ) );
+    loss(model, x,y) = (size(y,1) == 1) ? Losses.binarycrossentropy(model(x),y) : Losses.crossentropy(model(x),y);
+    opt_state = Flux.setup(Adam(0.01), ann) 
     losses = []  # Lista para almacenar los valores de pérdida en cada ciclo
-    opt_state = Flux.setup(Adam(learningRate), ann)
     bestValLoss = Inf
     bestValLossEpoch = 0
     bestAnn = ann
     @showprogress for epoch in 1:maxEpochs
-        Flux.train!(loss, ann, [(inputs', targets')], opt_state)
-        loss_value = loss(ann, inputs', targets')
+        Flux.train!(loss, ann, [(inputs, targets)], opt_state)
+        loss_value = loss(ann, inputs, targets)
         push!(losses, loss_value)
         if loss_value ≤ minLoss
             println("Pérdida mínima alcanzada después de $epoch ciclos.")
@@ -157,6 +185,7 @@ function trainClassANN(topology::AbstractArray{<:Int,1}, trainingDataset::Tuple{
     inputs, targets = trainingDataset
     ann = buildClassANN(size(inputs, 2), topology, 1, transferFunctions=transferFunctions)
     losses = []  # Lista para almacenar los valores de pérdida en cada ciclo
+    loss(model, x,y) = (size(y,1) == 1) ? Losses.binarycrossentropy(model(x),y) : Losses.crossentropy(model(x),y);
     opt_state = Flux.setup(Adam(learningRate), ann)
     bestValLoss = Inf
     bestValLossEpoch = 0
@@ -210,6 +239,7 @@ normalizeMinMax!(testInputs, normalizationParams);
 
 # 5. Entrenar la RNA
 topology = [2, 1];
+
 (ann, losses, valLoss, valLossEpoch) = trainClassANN(topology, (trainInputs', trainTargets'), validationDataset=(validationInputs', validationTargets'));
 # 6. Evaluar la RNA
 testLoss = loss(ann, testInputs', testTargets');
