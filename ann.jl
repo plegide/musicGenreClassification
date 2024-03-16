@@ -233,7 +233,7 @@ topology = [2, 1];
 loss(model, x,y) = (size(y,1) == 1) ? Losses.binarycrossentropy(model(x),y) : Losses.crossentropy(model(x),y);
 testLoss = loss(ann, testInputs', testTargets');
 testOutputs = ann(testInputs');
-testAccuracy = accuracy(testOutputs, testTargets);
+testAccuracy = accuracy(testOutputs', testTargets);
 
 # 7. Mostrar resultados
 println("Pérdida de prueba: $testLoss")
