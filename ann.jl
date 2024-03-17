@@ -1,6 +1,5 @@
 using Flux, Flux.Losses, DelimitedFiles, Plots, ProgressMeter, Random, Statistics
 
-
 function oneHotEncoding(feature::AbstractArray{<:Any,1}, classes::AbstractArray{<:Any,1})
     numClasses = length(classes)
     @assert(numClasses > 1)
@@ -202,6 +201,35 @@ function trainClassANN(topology::AbstractArray{<:Int,1}, trainingDataset::Tuple{
     return bestAnn, losses, bestValLoss, bestValLossEpoch
 end
 
+function confusionMatrix(outputs::AbstractArray{Bool,1}, targets::AbstractArray{Bool,1})
+    VP = sum(outputs .& targets)
+    VN = sum((.~outputs) .& (.~targets))
+    FP = sum(outputs .& (.~targets))
+    FN = sum((.~outputs) .& targets)
+    return (VP=VP, VN=VN, FP=FP, FN=FN)
+end
+
+function confusionMatrix(outputs::AbstractArray{<:Real,1}, targets::AbstractArray{Bool,1}; threshold::Real=0.5)
+    outputs_bool = classifyOutputs(outputs, threshold=threshold)
+    return confusionMatrix(outputs_bool, targets)
+end
+
+function printConfusionMatrix(outputs::AbstractArray{Bool,1}, targets::AbstractArray{Bool,1})
+    (VP, VN, FP, FN) = confusionMatrix(outputs, targets)
+    println("Matriz de confusión:")
+    println("TP: $VP")
+    println("TN: $VN")
+    println("FP: $FP")
+    println("FN: $FN")
+
+    println("Precisión: $(accuracy(outputs, targets))")
+end
+
+function printConfusionMatrix(outputs::AbstractArray{<:Real,1}, targets::AbstractArray{Bool,1}; threshold::Real=0.5)
+    outputs_bool = classifyOutputs(outputs, threshold=threshold)
+    printConfusionMatrix(outputs_bool, targets)
+end
+
 # 1. Cargar el conjunto de datos
 dataset = readdlm("classicOrMetal.data",',');
 inputs = dataset[:,1:2];
@@ -237,8 +265,13 @@ topology = [2, 1];
 loss(model, x,y) = (size(y,1) == 1) ? Losses.binarycrossentropy(model(x),y) : Losses.crossentropy(model(x),y);
 testLoss = loss(ann, testInputs', testTargets');
 testOutputs = ann(testInputs');
-testAccuracy = accuracy(testOutputs', testTargets);
+testOutputs = testOutputs .> 0.5
 
+# print(testOutputs)
+testAccuracy = accuracy(testOutputs', testTargets);
+# testTargets = testTargets
+testOutputs = testOutputs[:]
+testTargets = testTargets[:]
 # 7. Mostrar resultados
 println("Pérdida de prueba: $testLoss")
 println("Precisión de prueba: $testAccuracy")
@@ -247,6 +280,7 @@ plot(losses, label="Pérdida de entrenamiento")
 xlabel!("Ciclo")
 ylabel!("Pérdida")
 title!("Pérdida de entrenamiento de la RNA")
+printConfusionMatrix(testOutputs, testTargets)
 # plot!([valLossEpoch], [valLoss], seriestype=:scatter, label="Pérdida de validación mínima")
 # plot!([valLossEpoch], [valLoss], seriestype=:vline, label="Pérdida de validación mínima")
 # plot!([valLossEpoch], [valLoss], seriestype=:hline, label="Pérdida de validación mínima")
