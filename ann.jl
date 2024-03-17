@@ -217,8 +217,8 @@ end
 function printConfusionMatrix(outputs::AbstractArray{Bool,1}, targets::AbstractArray{Bool,1})
     (VP, VN, FP, FN) = confusionMatrix(outputs, targets)
     println("Matriz de confusión:")
-    println("TP: $VP")
-    println("TN: $VN")
+    println("VP: $VP")
+    println("VN: $VN")
     println("FP: $FP")
     println("FN: $FN")
 
