@@ -278,8 +278,8 @@ ylabel!("Pérdida")
 title!("Pérdida de entrenamiento de la RNA")
 printConfusionMatrix(testOutputs, testTargets)
 # plot!([valLossEpoch], [valLoss], seriestype=:scatter, label="Pérdida de validación mínima")
-# plot!([valLossEpoch], [valLoss], seriestype=:vline, label="Pérdida de validación mínima")
-# plot!([valLossEpoch], [valLoss], seriestype=:hline, label="Pérdida de validación mínima")
+plot!([valLossEpoch], [valLoss], seriestype=:vline, label="Pérdida de validación mínima")
+plot!([valLossEpoch], [valLoss], seriestype=:hline, label="Pérdida de validación mínima")
 
 # 8. Guardar la RNA
 
