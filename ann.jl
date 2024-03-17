@@ -136,7 +136,6 @@ end
 
 function trainClassANN(topology::AbstractArray{<:Int,1}, trainingDataset::Tuple{AbstractArray{<:Real,2}, AbstractArray{Bool,2}}; validationDataset::Tuple{AbstractArray{<:Real,2}, AbstractArray{Bool,2}}= (Array{eltype(trainingDataset[1]),2}(undef,0,0), falses(0,0)), testDataset::Tuple{AbstractArray{<:Real,2}, AbstractArray{Bool,2}}= (Array{eltype(trainingDataset[1]),2}(undef,0,0), falses(0,0)), transferFunctions::AbstractArray{<:Function,1}=fill(σ, length(topology)), maxEpochs::Int=1000, minLoss::Real=0.0, learningRate::Real=0.01, maxEpochsVal::Int=20)
     inputs, targets = trainingDataset
-    print(size(inputs), size(targets))
     # ann = buildClassANN(size(inputs, 2), topology, size(targets, 2), transferFunctions=transferFunctions)
     # Definicion de la topologia de la ann
     ann = Chain( 
@@ -247,10 +246,10 @@ println("Precisión de prueba: $testAccuracy")
 plot(losses, label="Pérdida de entrenamiento")
 xlabel!("Ciclo")
 ylabel!("Pérdida")
-title!("Pérdida de entrenamiento durante el entrenamiento de la RNA")
-plot!([valLossEpoch], [valLoss], seriestype=:scatter, label="Pérdida de validación mínima")
-plot!([valLossEpoch], [valLoss], seriestype=:vline, label="Pérdida de validación mínima")
-plot!([valLossEpoch], [valLoss], seriestype=:hline, label="Pérdida de validación mínima")
+title!("Pérdida de entrenamiento de la RNA")
+# plot!([valLossEpoch], [valLoss], seriestype=:scatter, label="Pérdida de validación mínima")
+# plot!([valLossEpoch], [valLoss], seriestype=:vline, label="Pérdida de validación mínima")
+# plot!([valLossEpoch], [valLoss], seriestype=:hline, label="Pérdida de validación mínima")
 
 # 8. Guardar la RNA
 
