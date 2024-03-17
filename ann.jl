@@ -267,14 +267,10 @@ testLoss = loss(ann, testInputs', testTargets');
 testOutputs = ann(testInputs');
 testOutputs = testOutputs .> 0.5
 
-# print(testOutputs)
-testAccuracy = accuracy(testOutputs', testTargets);
-# testTargets = testTargets
 testOutputs = testOutputs[:]
 testTargets = testTargets[:]
 # 7. Mostrar resultados
 println("Pérdida de prueba: $testLoss")
-println("Precisión de prueba: $testAccuracy")
 
 plot(losses, label="Pérdida de entrenamiento")
 xlabel!("Ciclo")
