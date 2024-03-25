@@ -17,6 +17,63 @@ function oneHotEncoding(feature::AbstractArray{<:Any,1}, classes::AbstractArray{
     return feature
 end;
 
+function crossvalidation(N::Int64, k::Int64)
+    ordered_vector = collect(1:k)
+    repeated_vector = repeat(ordered_vector, Int(ceil(N / k)))
+    first_N_values = repeated_vector[1:N]
+    shuffled_vector = shuffle!(first_N_values)
+    return shuffled_vector
+end
+
+function crossvalidation(targets::AbstractArray{Bool,1}, k::Int64)
+    indices = collect(1:length(targets))
+    indices[targets] = crossvalidation(sum(targets), k)
+    indices[.!targets] = crossvalidation(sum(.!targets), k)
+    return indices
+end
+
+function crossvalidation(targets::AbstractArray{Bool,2}, k::Int64)
+    indices = zeros(Int, size(targets, 1))
+    for i in 1:size(targets, 2)
+        indices[findall(targets[:, i])] = crossvalidation(sum(targets[:, i]), k)
+    end
+    return indices
+end
+
+function crossvalidation(targets::AbstractArray{<:Any,1}, k::Int64)
+    indices = crossvalidation(oneHotEncoding(targets, unique(targets)), k)
+    return indices
+end
+
+function ANNCrossValidation(topology::AbstractArray{<:Int,1}, 
+inputs::AbstractArray{<:Real,2}, targets::AbstractArray{<:Any,1}, 
+crossValidationIndices::Array{Int64,1}; 
+numExecutions::Int=50, 
+transferFunctions::AbstractArray{<:Function,1}=fill(σ, length(topology)), 
+maxEpochs::Int=1000, minLoss::Real=0.0, learningRate::Real=0.01, 
+validationRatio::Real=0, maxEpochsVal::Int=20)
+    numClasses = size(targets, 2)
+    accuracies = zeros(numExecutions)
+    for execution in 1:numExecutions
+        # Separar el conjunto de datos en entrenamiento y validación
+        trainingIndices = findall(.~(crossValidationIndices .== 1))
+        validationIndices = findall(crossValidationIndices .== 1)
+        trainingInputs = inputs[trainingIndices, :]
+        validationInputs = inputs[validationIndices, :]
+        trainingTargets = targets[trainingIndices, :]
+        validationTargets = targets[validationIndices, :]
+        
+        # Entrenar la RNA
+        (ann, losses, valLoss, valLossEpoch) = trainClassANN(topology, (trainingInputs', trainingTargets'), validationDataset=(validationInputs', validationTargets'), maxEpochs=maxEpochs, minLoss=minLoss, learningRate=learningRate, maxEpochsVal=maxEpochsVal)
+        
+        # Evaluar la RNA
+        testOutputs = ann(validationInputs')
+        testOutputs = testOutputs .> 0.5
+        accuracies[execution] = accuracy(testOutputs, validationTargets)
+    end
+    return accuracies
+end
+
 function calculateMinMaxNormalizationParameters(data::AbstractArray{<:Real,2})
     mins = minimum(data, dims=1)
     maxs = maximum(data, dims=1)
