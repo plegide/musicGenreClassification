@@ -1,10 +1,12 @@
 using ScikitLearn, Flux, Flux.Losses, DelimitedFiles, Plots, ProgressMeter, Random, Statistics
+#push!(LOAD_PATH, "fonts")
+include("fonts/funciones.jl")
 @sk_import svm: SVC
 @sk_import tree: DecisionTreeClassifier
 @sk_import neighbors: KNeighborsClassifier
 
 function modelCrossValidation(modelType::Symbol, modelHyperparameters::Dict, 
-inputs::Array{Float64,2}, targets::Array{Any,1}, numFolds::Int64)
+inputs::Array{Float32,2}, targets::Array{Any,1}, numFolds::Int64)
 
     # Comprobamos que el numero de patrones coincide
     @assert(size(inputs,1)==length(targets));
@@ -157,9 +159,10 @@ numNeighbors = 3;
 
 # Cargamos el dataset
 dataset = readdlm("datasets/classicOrMetal/classicOrMetal.data",',');
+inputs = dataset[:,1:2];
 # Preparamos las entradas y las salidas deseadas
-inputs = convert(Array{Float64,2}, dataset[:,1:4]);
-targets = dataset[:,5];
+inputs = convert(Array{Float32,2}, inputs);
+targets = dataset[:,3];
 
 # Normalizamos las entradas, a pesar de que algunas se vayan a utilizar para test
 
