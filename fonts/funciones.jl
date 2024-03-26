@@ -301,12 +301,10 @@ function confusionMatrix(outputs::Array{Bool,1}, targets::Array{Bool,1})
     # Ponemos en las filas los que pertenecen a cada clase (targets) y en las columnas los clasificados (outputs)
     # Primera fila/columna: negativos
     # Segunda fila/columna: positivos
-    # Primera fila: patrones de clase negativo, clasificados como negativos o 
-   positivos
+    # Primera fila: patrones de clase negativo, clasificados como negativos o positivos
     confMatrix[1,1] = sum(.!targets .& .!outputs); # VN
     confMatrix[1,2] = sum(.!targets .& outputs); # FP
-    # Segunda fila: patrones de clase positiva, clasificados como negativos o 
-   positivos
+    # Segunda fila: patrones de clase positiva, clasificados como negativos o positivos
     confMatrix[2,1] = sum( targets .& .!outputs); # FN
     confMatrix[2,2] = sum( targets .& outputs); # VP
     return (acc, errorRate, recall, specificity, precision, NPV, F1, confMatrix)
@@ -540,7 +538,11 @@ function modelCrossValidation(modelType::Symbol, modelHyperparameters::Dict,
     
                 # Pasamos el conjunto de test
                 testOutputs = predict(model, testInputs);
-    
+                # bitvector to array of boolean 1 dimension
+                # testOutputs = [testOutputs[i] for i in 1:length(testOutputs)];
+                # testTargets = [testTargets[i] for i in 1:length(testTargets)];
+                # print(typeof(testOutputs))
+                # print(typeof(testTargets))
                 # Calculamos las metricas correspondientes con la funcion desarrollada en la practica anterior
                 (acc, _, _, _, _, _, F1, _) = confusionMatrix(testOutputs, testTargets);
     
@@ -598,7 +600,8 @@ function modelCrossValidation(modelType::Symbol, modelHyperparameters::Dict,
                     testOutPut = testOutPut .> 0.5
                     
                     testTargets = testTargets .> 0.5
-
+                    testOutPut = [testOutPut[i] for i in 1:length(testOutPut)];
+                    testTargets = [testTargets[i] for i in 1:length(testTargets)];
                     # Calculamos las metricas correspondientes con la funcion desarrollada en la practica anterior
                     (testAccuraciesEachRepetition[numTraining], _, _, _, _, _, testF1EachRepetition[numTraining], _) = confusionMatrix(vec(testOutPut), vec(testTargets));
                 end;
