@@ -458,7 +458,7 @@ function modelCrossValidation(modelType::Symbol, modelHyperparameters::Dict,
                         
                         ann, = trainClassANN(modelHyperparameters["topology"],
                             (trainingInputs', trainingTargets'),
-                            testInputs, testTargets;
+                            validationDataset=(testInputs', testTargets'),
                             maxEpochs=modelHyperparameters["maxEpochs"], 
                             learningRate=modelHyperparameters["learningRate"]);
                             
