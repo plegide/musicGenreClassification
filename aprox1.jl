@@ -40,7 +40,7 @@ targets = dataset[:,3];
 # Normalizamos las entradas, a pesar de que algunas se vayan a utilizar para test
 
 normalizeMinMax!(inputs);
-
+#=
 # Entrenamos las RR.NN.AA.
 modelHyperparameters = Dict();
 modelHyperparameters["topology"] = topology;
@@ -49,8 +49,9 @@ modelHyperparameters["validationRatio"] = validationRatio;
 modelHyperparameters["numExecutions"] = numRepetitionsAANTraining;
 modelHyperparameters["maxEpochs"] = numMaxEpochs;
 modelHyperparameters["maxEpochsVal"] = maxEpochsVal;
-modelCrossValidation(:ANN, modelHyperparameters, inputs, targets, 2);
-#=
+modelCrossValidation(:ANN, modelHyperparameters, inputs, targets, numFolds);
+
+
 # Entrenamos las SVM
 modelHyperparameters = Dict();
 modelHyperparameters["kernel"] = kernel;
@@ -62,8 +63,8 @@ modelCrossValidation(:SVM, modelHyperparameters, inputs, targets, numFolds);
 # Entrenamos los arboles de decision
 modelCrossValidation(:DecisionTree, Dict("maxDepth" => maxDepth), inputs, 
 targets, numFolds);
-
+=#
 # Entrenamos los kNN
 modelCrossValidation(:kNN, Dict("numNeighbors" => numNeighbors), inputs, 
 targets, numFolds);
-=#
+

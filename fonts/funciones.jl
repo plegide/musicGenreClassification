@@ -538,9 +538,15 @@ function modelCrossValidation(modelType::Symbol, modelHyperparameters::Dict,
     
                 # Pasamos el conjunto de test
                 testOutputs = predict(model, testInputs);
+                testOutputs = oneHotEncoding(testOutputs, unique(testOutputs))
+                testTargets = oneHotEncoding(testTargets, unique(testTargets))
                 # bitvector to array of boolean 1 dimension
-                # testOutputs = [testOutputs[i] for i in 1:length(testOutputs)];
-                # testTargets = [testTargets[i] for i in 1:length(testTargets)];
+                 testOutputs = [testOutputs[i] for i in 1:length(testOutputs)];
+                 #testOutputs = convert(AbstractArray{Bool,1},testOutputs)
+                 testTargets = [testTargets[i] for i in 1:length(testTargets)];
+                 #testTargets = convert(AbstractArray{Bool,1},testTargets)
+                 
+                 
                 # print(typeof(testOutputs))
                 # print(typeof(testTargets))
                 # Calculamos las metricas correspondientes con la funcion desarrollada en la practica anterior
