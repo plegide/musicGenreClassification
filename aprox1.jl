@@ -50,7 +50,7 @@ modelHyperparameters["numExecutions"] = numRepetitionsAANTraining;
 modelHyperparameters["maxEpochs"] = numMaxEpochs;
 modelHyperparameters["maxEpochsVal"] = maxEpochsVal;
 modelCrossValidation(:ANN, modelHyperparameters, inputs, targets, numFolds);
-
+#=
 # Entrenamos las SVM
 modelHyperparameters = Dict();
 modelHyperparameters["kernel"] = kernel;

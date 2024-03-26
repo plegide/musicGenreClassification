@@ -195,6 +195,7 @@ function trainClassANN(topology::AbstractArray{<:Int,1}, trainingDataset::Tuple{
     inputs, targets = trainingDataset
     # ann = buildClassANN(size(inputs, 2), topology, size(targets, 2), transferFunctions=transferFunctions)
     # Definicion de la topologia de la ann
+    #ann = buildClassANN(size(inputs', 2), topology, size(targets', 2), transferFunctions=transferFunctions)
     ann = Chain( 
     Dense(2, 4, σ), 
     Dense(4, 1, σ) );
@@ -229,6 +230,7 @@ function trainClassANN(topology::AbstractArray{<:Int,1}, trainingDataset::Tuple{
     inputs, targets = trainingDataset
     # ann = buildClassANN(size(inputs, 2), topology, 1, transferFunctions=transferFunctions)
     # Definicion de la topologia de la ann
+    #ann = buildClassANN(size(inputs', 2), topology, size(targets', 2), transferFunctions=transferFunctions)
     ann = Chain( 
     Dense(2, 4, σ), 
     Dense(4, 1, σ) );
@@ -357,7 +359,7 @@ function calculateMetrics()
    =#
 
 
-   function modelCrossValidation(modelType::Symbol, modelHyperparameters::Dict, 
+function modelCrossValidation(modelType::Symbol, modelHyperparameters::Dict, 
     inputs::Array{Float32,2}, targets::Array{Any,1}, numFolds::Int64)
     
         # Comprobamos que el numero de patrones coincide
@@ -439,6 +441,7 @@ function calculateMetrics()
                         (trainingIndices, validationIndices) = holdOut(size(trainingInputs,1), modelHyperparameters["validationRatio"]*size(trainingInputs,1)/size(inputs,1));
                         # Con estos indices, se pueden crear los vectores finales que vamos a usar para entrenar una RNA
                         # Entrenamos la RNA, teniendo cuidado de codificar las salidas deseadas correctamente
+                        #=
                         ann, = trainClassANN(modelHyperparameters["topology"],
                                 (trainingInputs', trainingTargets'),
                                 trainingInputs[validationIndices,:], 
@@ -447,15 +450,18 @@ function calculateMetrics()
                                 maxEpochs=modelHyperparameters["maxEpochs"], 
                                 learningRate=modelHyperparameters["learningRate"], 
                                 maxEpochsVal=modelHyperparameters["maxEpochsVal"]);
+                                =#
                     else
     
                         # Si no se desea usar conjunto de validacion, se entrena unicamente con conjuntos de entrenamiento y test,
                         # teniendo cuidado de codificar las salidas deseadas correctamente
+                        
                         ann, = trainClassANN(modelHyperparameters["topology"],
                             (trainingInputs', trainingTargets'),
                             testInputs, testTargets;
                             maxEpochs=modelHyperparameters["maxEpochs"], 
                             learningRate=modelHyperparameters["learningRate"]);
+                            
                     end;
     
                     # Calculamos las metricas correspondientes con la funcion desarrollada en la practica anterior
@@ -481,4 +487,4 @@ function calculateMetrics()
         println(modelType, ": Average test F1 on a ", numFolds, "-fold crossvalidation: ", 100*mean(testF1), ", with a standard deviation of ", 100*std(testF1));
     
         return (mean(testAccuracies), std(testAccuracies), mean(testF1), std(testF1));
-    end;
+end;
