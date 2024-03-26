@@ -463,9 +463,14 @@ function modelCrossValidation(modelType::Symbol, modelHyperparameters::Dict,
                             learningRate=modelHyperparameters["learningRate"]);
                             
                     end;
-    
+                   
+                    testOutPut = ann(testInputs')
+                    testOutPut = testOutPut .> 0.5
+                    
+                    testTargets = testTargets .> 0.5
+
                     # Calculamos las metricas correspondientes con la funcion desarrollada en la practica anterior
-                    (testAccuraciesEachRepetition[numTraining], _, _, _, _, _, testF1EachRepetition[numTraining], _) = confusionMatrix(collect(ann(testInputs')'), testTargets);
+                    (testAccuraciesEachRepetition[numTraining], _, _, _, _, _, testF1EachRepetition[numTraining], _) = confusionMatrix(vec(testOutPut), vec(testTargets));
                 end;
     
                 # Calculamos el valor promedio de todos los entrenamientos de este fold

@@ -17,6 +17,10 @@ function oneHotEncoding(feature::AbstractArray{<:Any,1}, classes::AbstractArray{
     return feature
 end;
 
+oneHotEncoding(feature::AbstractArray{<:Any,1}) = (classes = unique(feature); oneHotEncoding(feature, classes));
+
+oneHotEncoding(feature::AbstractArray{Bool,1}) = reshape(feature, :, 1)
+
 function crossvalidation(N::Int64, k::Int64)
     ordered_vector = collect(1:k)
     repeated_vector = repeat(ordered_vector, Int(ceil(N / k)))
