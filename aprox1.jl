@@ -49,7 +49,7 @@ modelHyperparameters["validationRatio"] = validationRatio;
 modelHyperparameters["numExecutions"] = numRepetitionsAANTraining;
 modelHyperparameters["maxEpochs"] = numMaxEpochs;
 modelHyperparameters["maxEpochsVal"] = maxEpochsVal;
-modelCrossValidation(:ANN, modelHyperparameters, inputs, targets, numFolds);
+modelCrossValidation(:ANN, modelHyperparameters, inputs, targets, 2);
 #=
 # Entrenamos las SVM
 modelHyperparameters = Dict();
@@ -66,3 +66,4 @@ targets, numFolds);
 # Entrenamos los kNN
 modelCrossValidation(:kNN, Dict("numNeighbors" => numNeighbors), inputs, 
 targets, numFolds);
+=#
