@@ -181,7 +181,7 @@ function trainClassANN(topology::AbstractArray{<:Int,1}, trainingDataset::Tuple{
         Flux.train!(loss, ann, [(inputs, targets)], opt_state)
         train_loss = loss(ann, inputs, targets)
         validation_loss = loss(ann, validationDataset...)
-        test_loss = loss(ann, inputs, testDataset...)
+        test_loss = loss(ann, testDataset...)
         push!(train_losses, train_loss)
         push!(validation_losses, validation_loss)
         push!(test_losses, test_loss)
@@ -610,7 +610,7 @@ function modelCrossValidation(modelType::Symbol, modelHyperparameters::Dict,
                 testF1EachRepetition = Array{Float64,1}(undef, modelHyperparameters["numExecutions"]);
     
                 # Se entrena las veces que se haya indicado
-                for numTraining in 1:modelHyperparameters["numExecutions"]
+                for numTraining in 1:1#modelHyperparameters["numExecutions"]
     
                     if modelHyperparameters["validationRatio"]>0
     
@@ -624,10 +624,12 @@ function modelCrossValidation(modelType::Symbol, modelHyperparameters::Dict,
                     else
                         # Si no se desea usar conjunto de validacion, se entrena unicamente con conjuntos de entrenamiento y test,
                         # teniendo cuidado de codificar las salidas deseadas correctamente
-
+                        testInputsMatrix = Matrix{Float32}(testInputs[1, :]')  # Convertir las entradas a tipo Float32
+                        testTargetsMatrix = Matrix{Bool}(reshape(testTargets[1, :], 1, :)) 
                         ann, = trainClassANN(modelHyperparameters["topology"],
                             (trainingInputs', trainingTargets'),
                             validationDataset=(testInputs', testTargets'),
+                            testDataset=(testInputsMatrix', testTargetsMatrix'),
                             maxEpochs=modelHyperparameters["maxEpochs"], 
                             learningRate=modelHyperparameters["learningRate"]);
                     end;
