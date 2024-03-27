@@ -40,7 +40,7 @@ targets = dataset[:,3];
 # Normalizamos las entradas, a pesar de que algunas se vayan a utilizar para test
 
 normalizeMinMax!(inputs);
-#=
+
 # Entrenamos las RR.NN.AA.
 modelHyperparameters = Dict();
 modelHyperparameters["topology"] = topology;
@@ -52,19 +52,19 @@ modelHyperparameters["maxEpochsVal"] = maxEpochsVal;
 modelCrossValidation(:ANN, modelHyperparameters, inputs, targets, numFolds);
 
 
-# Entrenamos las SVM
-modelHyperparameters = Dict();
-modelHyperparameters["kernel"] = kernel;
-modelHyperparameters["kernelDegree"] = kernelDegree;
-modelHyperparameters["kernelGamma"] = kernelGamma;
-modelHyperparameters["C"] = C;
-modelCrossValidation(:SVM, modelHyperparameters, inputs, targets, numFolds);
+# # Entrenamos las SVM
+# modelHyperparameters = Dict();
+# modelHyperparameters["kernel"] = kernel;
+# modelHyperparameters["kernelDegree"] = kernelDegree;
+# modelHyperparameters["kernelGamma"] = kernelGamma;
+# modelHyperparameters["C"] = C;
+# modelCrossValidation(:SVM, modelHyperparameters, inputs, targets, numFolds);
 
-# Entrenamos los arboles de decision
-modelCrossValidation(:DecisionTree, Dict("maxDepth" => maxDepth), inputs, 
-targets, numFolds);
-=#
+# # Entrenamos los arboles de decision
+# modelCrossValidation(:DecisionTree, Dict("maxDepth" => maxDepth), inputs, 
+# targets, numFolds);
+
 # Entrenamos los kNN
-modelCrossValidation(:kNN, Dict("numNeighbors" => numNeighbors), inputs, 
-targets, numFolds);
+# modelCrossValidation(:kNN, Dict("numNeighbors" => numNeighbors), inputs, 
+# targets, numFolds);
 
