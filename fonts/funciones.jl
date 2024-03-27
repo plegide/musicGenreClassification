@@ -169,29 +169,38 @@ function trainClassANN(topology::AbstractArray{<:Int,1}, trainingDataset::Tuple{
     # Dense(4, 1, σ) );
     loss(model, x,y) = (size(y,1) == 1) ? Losses.binarycrossentropy(model(x),y) : Losses.crossentropy(model(x),y);
     opt_state = Flux.setup(Adam(learningRate), ann)
-    losses = []  # Lista para almacenar los valores de pérdida en cada ciclo
+    train_losses = [] 
+    validation_losses = []
+    test_losses = []
     bestValLoss = Inf
     bestValLossEpoch = 0
     bestAnn = ann
+    print(typeof(validationDataset))
+    print(typeof(testDataset))
     @showprogress for epoch in 1:maxEpochs
         Flux.train!(loss, ann, [(inputs, targets)], opt_state)
-        loss_value = loss(ann, inputs, targets)
-        push!(losses, loss_value)
-        if loss_value ≤ minLoss
+        train_loss = loss(ann, inputs, targets)
+        validation_loss = loss(ann, validationDataset...)
+        test_loss = loss(ann, inputs, testDataset...)
+        push!(train_losses, train_loss)
+        push!(validation_losses, validation_loss)
+        push!(test_losses, test_loss)
+
+        if validation_loss ≤ minLoss
             println("Pérdida mínima alcanzada después de $epoch ciclos.")
             break
         end
+
         if epoch % maxEpochsVal == 0
-            valLoss = loss(ann, validationDataset...)
-            if valLoss < bestValLoss
+            if validation_loss < bestValLoss
                 # Este if se usa para devolver la mejor ann del entrenamiento
-                bestValLoss = valLoss
+                bestValLoss = validation_loss
                 bestValLossEpoch = epoch
                 bestAnn = ann
             end
         end
     end
-    return bestAnn, losses, bestValLoss, bestValLossEpoch
+    return bestAnn, train_losses, validation_losses, test_losses, bestValLoss, bestValLossEpoch
 end
 
 function trainClassANN(topology::AbstractArray{<:Int,1}, trainingDataset::Tuple{AbstractArray{<:Real,2}, AbstractArray{Bool,1}}; validationDataset::Tuple{AbstractArray{<:Real,2}, AbstractArray{Bool,1}}= (Array{eltype(trainingDataset[1]),2}(undef,0,0), falses(0)), testDataset::Tuple{AbstractArray{<:Real,2}, AbstractArray{Bool,1}}= (Array{eltype(trainingDataset[1]),2}(undef,0,0), falses(0)), transferFunctions::AbstractArray{<:Function,1}=fill(σ, length(topology)), maxEpochs::Int=1000, minLoss::Real=0.0, learningRate::Real=0.01, maxEpochsVal::Int=20)
@@ -203,30 +212,35 @@ function trainClassANN(topology::AbstractArray{<:Int,1}, trainingDataset::Tuple{
     # Dense(2, 4, σ), 
     # Dense(4, 1, σ) );
     loss(model, x,y) = (size(y,1) == 1) ? Losses.binarycrossentropy(model(x),y) : Losses.crossentropy(model(x),y);
-    opt_state = Flux.setup(Adam(0.01), ann) 
-    losses = []  # Lista para almacenar los valores de pérdida en cada ciclo
+    opt_state = Flux.setup(Adam(learningRate), ann)
+    train_losses = []
+    validation_losses = []
+    test_losses = []
     bestValLoss = Inf
     bestValLossEpoch = 0
     bestAnn = ann
     @showprogress for epoch in 1:maxEpochs
         Flux.train!(loss, ann, [(inputs', targets')], opt_state)
-        loss_value = loss(ann, inputs', targets')
-        push!(losses, loss_value)
+        train_loss = loss(ann, inputs, targets)
+        validation_loss = loss(ann, validationDataset...)
+        test_loss = loss(ann, inputs, testDataset...)
+        push!(train_losses, train_loss)
+        push!(validation_losses, validation_loss)
+        push!(test_losses, test_loss)
         if loss_value ≤ minLoss
             println("Pérdida mínima alcanzada después de $epoch ciclos.")
             break
         end
         if epoch % maxEpochsVal == 0
-            valLoss = loss(ann, validationDataset...)
-            if valLoss < bestValLoss
+            if validation_loss < bestValLoss
                 # Este if se usa para devolver la mejor ann del entrenamiento
-                bestValLoss = valLoss
+                bestValLoss = validation_loss
                 bestValLossEpoch = epoch
                 bestAnn = ann
             end
         end
     end
-    return bestAnn, losses, bestValLoss, bestValLossEpoch
+    return bestAnn, train_losses, validation_losses, test_losses, bestValLoss, bestValLossEpoch
 end
 
 
@@ -275,10 +289,10 @@ validationRatio::Real=0, maxEpochsVal::Int=20)
         validationInputs = inputs[validationIndices, :]
         trainingTargets = targets[trainingIndices, :]
         validationTargets = targets[validationIndices, :]
-        
+
         # Entrenar la RNA
-        (ann, losses, valLoss, valLossEpoch) = trainClassANN(topology, (trainingInputs', trainingTargets'), validationDataset=(validationInputs', validationTargets'), maxEpochs=maxEpochs, minLoss=minLoss, learningRate=learningRate, maxEpochsVal=maxEpochsVal)
-        
+        (ann, train_losses, validation_losses, test_losses, valLoss, valLossEpoch) = trainClassANN(topology, (trainingInputs', trainingTargets'), validationDataset=(validationInputs', validationTargets'), maxEpochs=maxEpochs, minLoss=minLoss, learningRate=learningRate, maxEpochsVal=maxEpochsVal)
+
         # Evaluar la RNA
         testOutputs = ann(validationInputs')
         testOutputs = testOutputs .> 0.5
@@ -606,27 +620,16 @@ function modelCrossValidation(modelType::Symbol, modelHyperparameters::Dict,
                         (trainingIndices, validationIndices) = holdOut(size(trainingInputs,1), modelHyperparameters["validationRatio"]*size(trainingInputs,1)/size(inputs,1));
                         # Con estos indices, se pueden crear los vectores finales que vamos a usar para entrenar una RNA
                         # Entrenamos la RNA, teniendo cuidado de codificar las salidas deseadas correctamente
-                        #=
-                        ann, = trainClassANN(modelHyperparameters["topology"],
-                                (trainingInputs', trainingTargets'),
-                                trainingInputs[validationIndices,:], 
-                                trainingTargets[validationIndices,:],
-                                testInputs, testTargets;
-                                maxEpochs=modelHyperparameters["maxEpochs"], 
-                                learningRate=modelHyperparameters["learningRate"], 
-                                maxEpochsVal=modelHyperparameters["maxEpochsVal"]);
-                                =#
+                        ann, = trainClassANN(modelHyperparameters["topology"], trainingDataset=(trainingInputs[trainingIndices,:]', trainingTargets[trainingIndices,:]'), validationDataset=(trainingInputs[validationIndices,:]', trainingTargets[validationIndices,:]'), testDataset=(testInputs[1,:]', Matrix{Float32}(reshape(testTargets[1,:], 1, :))), maxEpochs=modelHyperparameters["maxEpochs"], learningRate=modelHyperparameters["learningRate"]);
                     else
-    
                         # Si no se desea usar conjunto de validacion, se entrena unicamente con conjuntos de entrenamiento y test,
                         # teniendo cuidado de codificar las salidas deseadas correctamente
-                        
+
                         ann, = trainClassANN(modelHyperparameters["topology"],
                             (trainingInputs', trainingTargets'),
                             validationDataset=(testInputs', testTargets'),
                             maxEpochs=modelHyperparameters["maxEpochs"], 
                             learningRate=modelHyperparameters["learningRate"]);
-                            
                     end;
                    
                     testOutPut = ann(testInputs')
