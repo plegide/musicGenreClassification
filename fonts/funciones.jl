@@ -175,8 +175,6 @@ function trainClassANN(topology::AbstractArray{<:Int,1}, trainingDataset::Tuple{
     bestValLoss = Inf
     bestValLossEpoch = 0
     bestAnn = ann
-    print(typeof(validationDataset))
-    print(typeof(testDataset))
     @showprogress for epoch in 1:maxEpochs
         Flux.train!(loss, ann, [(inputs, targets)], opt_state)
         train_loss = loss(ann, inputs, targets)
@@ -591,8 +589,7 @@ function modelCrossValidation(modelType::Symbol, modelHyperparameters::Dict,
                 # print(typeof(testOutputs))
                 # print(typeof(testTargets))
                 # Calculamos las metricas correspondientes con la funcion desarrollada en la practica anterior
-                (acc, _, _, _, _, _, F1, _) = confusionMatrix(testOutputs, testTargets);
-    
+                (acc, _, _, _, _, _, F1, _) = confusionMatrix(testOutputs, testTargets);    
             else
     
                 # Vamos a usar RR.NN.AA.
@@ -645,9 +642,8 @@ function modelCrossValidation(modelType::Symbol, modelHyperparameters::Dict,
                 end;
     
                 # Calculamos el valor promedio de todos los entrenamientos de este fold
-    
-                acc = mean(testAccuraciesEachRepetition);
-                F1 = mean(testF1EachRepetition);
+                acc = testAccuraciesEachRepetition[1];
+                F1 = testF1EachRepetition[1];
             end;
     
             # Almacenamos las 2 metricas que usamos en este problema
