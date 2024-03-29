@@ -194,7 +194,7 @@ function trainClassANN(topology::AbstractArray{<:Int,1}, trainingDataset::Tuple{
                 # Este if se usa para devolver la mejor ann del entrenamiento
                 bestValLoss = validation_loss
                 bestValLossEpoch = epoch
-                bestAnn = ann
+                bestAnn = deepcopy(ann)
             end
         end
     end
@@ -234,7 +234,7 @@ function trainClassANN(topology::AbstractArray{<:Int,1}, trainingDataset::Tuple{
                 # Este if se usa para devolver la mejor ann del entrenamiento
                 bestValLoss = validation_loss
                 bestValLossEpoch = epoch
-                bestAnn = ann
+                bestAnn = deepcopy(ann)
             end
         end
     end
@@ -607,7 +607,7 @@ function modelCrossValidation(modelType::Symbol, modelHyperparameters::Dict,
                 testF1EachRepetition = Array{Float64,1}(undef, modelHyperparameters["numExecutions"]);
     
                 # Se entrena las veces que se haya indicado
-                for numTraining in 1:1#modelHyperparameters["numExecutions"]
+                for numTraining in 1:modelHyperparameters["numExecutions"]
     
                     if modelHyperparameters["validationRatio"]>0
     
@@ -642,8 +642,8 @@ function modelCrossValidation(modelType::Symbol, modelHyperparameters::Dict,
                 end;
     
                 # Calculamos el valor promedio de todos los entrenamientos de este fold
-                acc = testAccuraciesEachRepetition[1];
-                F1 = testF1EachRepetition[1];
+                acc = mean(testAccuraciesEachRepetition);
+                F1 = mean(testF1EachRepetition);
             end;
     
             # Almacenamos las 2 metricas que usamos en este problema
