@@ -302,7 +302,7 @@ end
 ############################################################
 
 
-function confusionMatrix(outputs::Array{Bool,1}, targets::Array{Bool,1})
+function confusionMatrix(outputs::AbstractArray{Bool,1}, targets::AbstractArray{Bool,1})
     @assert(length(outputs)==length(targets));
     # Para calcular la precision y la tasa de error, se puede llamar a las funciones definidas en la practica 2
     acc = accuracy(outputs, targets); # Precision, definida previamente en una practica anterior
@@ -350,12 +350,12 @@ function confusionMatrix(outputs::Array{Bool,1}, targets::Array{Bool,1})
    end;
 
 
-confusionMatrix(outputs::Array{Float64,1}, targets::Array{Bool,1}; 
+confusionMatrix(outputs::AbstractArray{Float64,1}, targets::AbstractArray{Bool,1}; 
    threshold::Float64=0.5) = confusionMatrix(Array{Bool,1}(outputs.>=threshold), 
    targets);
    
 
-   function confusionMatrix(outputs::Array{Bool,2}, targets::Array{Bool,2}; 
+   function confusionMatrix(outputs::AbstractArray{Bool,2}, targets::AbstractArray{Bool,2}; 
     weighted::Bool=true)
      @assert(size(outputs)==size(targets));
      numClasses = size(targets,2);
@@ -424,7 +424,7 @@ confusionMatrix(outputs::Array{Float64,1}, targets::Array{Bool,1};
     end;
     
 
-    function confusionMatrix(outputs::Array{Any,1}, targets::Array{Any,1}; 
+    function confusionMatrix(outputs::AbstractArray{Any,1}, targets::AbstractArray{Any,1}; 
         weighted::Bool=true)
          # Comprobamos que todas las clases de salida esten dentro de las clases de las salidas deseadas
          @assert(all([in(output, unique(targets)) for output in outputs]));
