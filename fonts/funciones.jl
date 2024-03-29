@@ -577,12 +577,12 @@ function modelCrossValidation(modelType::Symbol, modelHyperparameters::Dict,
     
                 # Pasamos el conjunto de test
                 testOutputs = predict(model, testInputs);
-                testOutputs = oneHotEncoding(testOutputs, unique(testOutputs))
-                testTargets = oneHotEncoding(testTargets, unique(testTargets))
+                #testOutputs = oneHotEncoding(testOutputs, unique(testOutputs))
+                #testTargets = oneHotEncoding(testTargets, unique(testTargets))
                 # bitvector to array of boolean 1 dimension
-                 testOutputs = [testOutputs[i] for i in 1:length(testOutputs)];
+                 #testOutputs = [testOutputs[i] for i in 1:length(testOutputs)];
                  #testOutputs = convert(AbstractArray{Bool,1},testOutputs)
-                 testTargets = [testTargets[i] for i in 1:length(testTargets)];
+                 #testTargets = [testTargets[i] for i in 1:length(testTargets)];
                  #testTargets = convert(AbstractArray{Bool,1},testTargets)
                  
                  
