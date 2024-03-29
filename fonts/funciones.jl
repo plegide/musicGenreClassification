@@ -194,7 +194,7 @@ function trainClassANN(topology::AbstractArray{<:Int,1}, trainingDataset::Tuple{
                 # Este if se usa para devolver la mejor ann del entrenamiento
                 bestValLoss = validation_loss
                 bestValLossEpoch = epoch
-                bestAnn = ann
+                bestAnn = deepcopy(ann)
             end
         end
     end
@@ -234,7 +234,7 @@ function trainClassANN(topology::AbstractArray{<:Int,1}, trainingDataset::Tuple{
                 # Este if se usa para devolver la mejor ann del entrenamiento
                 bestValLoss = validation_loss
                 bestValLossEpoch = epoch
-                bestAnn = ann
+                bestAnn = deepcopy(ann)
             end
         end
     end
@@ -302,7 +302,7 @@ end
 ############################################################
 
 
-function confusionMatrix(outputs::Array{Bool,1}, targets::Array{Bool,1})
+function confusionMatrix(outputs::AbstractArray{Bool,1}, targets::AbstractArray{Bool,1})
     @assert(length(outputs)==length(targets));
     # Para calcular la precision y la tasa de error, se puede llamar a las funciones definidas en la practica 2
     acc = accuracy(outputs, targets); # Precision, definida previamente en una practica anterior
@@ -350,12 +350,12 @@ function confusionMatrix(outputs::Array{Bool,1}, targets::Array{Bool,1})
    end;
 
 
-confusionMatrix(outputs::Array{Float64,1}, targets::Array{Bool,1}; 
+confusionMatrix(outputs::AbstractArray{Float64,1}, targets::AbstractArray{Bool,1}; 
    threshold::Float64=0.5) = confusionMatrix(Array{Bool,1}(outputs.>=threshold), 
    targets);
    
 
-   function confusionMatrix(outputs::Array{Bool,2}, targets::Array{Bool,2}; 
+   function confusionMatrix(outputs::AbstractArray{Bool,2}, targets::AbstractArray{Bool,2}; 
     weighted::Bool=true)
      @assert(size(outputs)==size(targets));
      numClasses = size(targets,2);
@@ -424,7 +424,7 @@ confusionMatrix(outputs::Array{Float64,1}, targets::Array{Bool,1};
     end;
     
 
-    function confusionMatrix(outputs::Array{Any,1}, targets::Array{Any,1}; 
+    function confusionMatrix(outputs::AbstractArray{Any,1}, targets::AbstractArray{Any,1}; 
         weighted::Bool=true)
          # Comprobamos que todas las clases de salida esten dentro de las clases de las salidas deseadas
          @assert(all([in(output, unique(targets)) for output in outputs]));
@@ -577,12 +577,12 @@ function modelCrossValidation(modelType::Symbol, modelHyperparameters::Dict,
     
                 # Pasamos el conjunto de test
                 testOutputs = predict(model, testInputs);
-                testOutputs = oneHotEncoding(testOutputs, unique(testOutputs))
-                testTargets = oneHotEncoding(testTargets, unique(testTargets))
+                #testOutputs = oneHotEncoding(testOutputs, unique(testOutputs))
+                #testTargets = oneHotEncoding(testTargets, unique(testTargets))
                 # bitvector to array of boolean 1 dimension
-                 testOutputs = [testOutputs[i] for i in 1:length(testOutputs)];
+                 #testOutputs = [testOutputs[i] for i in 1:length(testOutputs)];
                  #testOutputs = convert(AbstractArray{Bool,1},testOutputs)
-                 testTargets = [testTargets[i] for i in 1:length(testTargets)];
+                 #testTargets = [testTargets[i] for i in 1:length(testTargets)];
                  #testTargets = convert(AbstractArray{Bool,1},testTargets)
                  
                  
@@ -607,7 +607,7 @@ function modelCrossValidation(modelType::Symbol, modelHyperparameters::Dict,
                 testF1EachRepetition = Array{Float64,1}(undef, modelHyperparameters["numExecutions"]);
     
                 # Se entrena las veces que se haya indicado
-                for numTraining in 1:1#modelHyperparameters["numExecutions"]
+                for numTraining in 1:modelHyperparameters["numExecutions"]
     
                     if modelHyperparameters["validationRatio"]>0
     
@@ -642,8 +642,8 @@ function modelCrossValidation(modelType::Symbol, modelHyperparameters::Dict,
                 end;
     
                 # Calculamos el valor promedio de todos los entrenamientos de este fold
-                acc = testAccuraciesEachRepetition[1];
-                F1 = testF1EachRepetition[1];
+                acc = mean(testAccuraciesEachRepetition);
+                F1 = mean(testF1EachRepetition);
             end;
     
             # Almacenamos las 2 metricas que usamos en este problema
