@@ -160,214 +160,6 @@ function holdOut(N::Int, Pval::Float64, Ptest::Float64)
 end;
 
 
-
-# function trainClassANN(topology::Array{Int64,1},
-#  trainingInputs::Array{Float64,2}, trainingTargets::Array{Bool,2},
-#  testInputs::Array{Float64,2}, testTargets::Array{Bool,2};
-#  maxEpochs::Int64=1000, minLoss::Float64=0.0, learningRate::Float64=0.1, 
-# showText::Bool=false)
-
-#  ann = buildClassANN(size(trainingInputs,2), topology, size(trainingTargets,2));
-#  # Definimos la funcion de loss
-#  loss(x,y) = (size(y,1) == 1) ? Losses.binarycrossentropy(ann(x),y) : Losses.crossentropy(ann(x),y);
-#  # Creamos los vectores con los valores de loss y de precision en cada ciclo
-#  trainingLosses = Float64[];
-#  trainingAccuracies = Float64[];
-#  testLosses = Float64[];
-#  testAccuracies = Float64[];
-#  # Empezamos en el ciclo 0
-#  numEpoch = 0;
-#  # Una funcion util para calcular los resultados y mostrarlos por pantalla
-#  function calculateMetrics()
-#  trainingLoss = loss(trainingInputs', trainingTargets');
-#  testLoss = loss(testInputs', testTargets');
-
-#  trainingOutputs = ann(trainingInputs');
-#  testOutputs = ann(testInputs');
-#  # Para calcular la precision, ponemos 2 opciones aqui equivalentes:
-#  # Pasar las matrices con los datos en las columnas. La matriz de 
-# salidas ya tiene un patron en cada columna
-#  trainingAcc = accuracy(trainingOutputs, Array{Bool,2}(trainingTargets');
-# dataInRows=false);
-#  testAcc = accuracy(testOutputs, Array{Bool,2}(testTargets'); 
-# dataInRows=false);
-#  # Pasar las matrices con los datos en las filas. Hay que trasponer la 
-# matriz de salidas de la RNA, puesto que cada dato esta en una fila
-#  trainingAcc = accuracy(Array{Float64,2}(trainingOutputs'), 
-# trainingTargets; dataInRows=true);
-#  testAcc = accuracy(Array{Float64,2}(testOutputs'), testTargets; 
-#  dataInRows=true);
-#  # Mostramos por pantalla el resultado de este ciclo de entrenamiento si 
-# nos lo han indicado
-#  if showText
-#  println("Epoch ", numEpoch, ": Training loss: ", trainingLoss, ", 
-# accuracy: ", 100*trainingAcc, " % - Test loss: ", testLoss, ", accuracy: ", 
-# 100*testAcc, " %");
-#  end;
-#  return (trainingLoss, trainingAcc, testLoss, testAcc)
-#  end;
-#  # Calculamos las metricas para el ciclo 0 (sin entrenar nada)
-#  (trainingLoss, trainingAccuracy, testLoss, testAccuracy) = 
-# calculateMetrics();
-#  # y almacenamos los valores de loss y precision en este ciclo
-#  push!(trainingLosses, trainingLoss);
-#  push!(testLosses, testLoss);
-#  push!(trainingAccuracies, trainingAccuracy);
-#  push!(testAccuracies, testAccuracy);
-#  # Entrenamos hasta que se cumpla una condicion de parada
-#  while (numEpoch<maxEpochs) && (trainingLoss>minLoss)
-#  # Entrenamos 1 ciclo. Para ello hay que pasar las matrices traspuestas 
-# (cada patron en una columna)
-#  Flux.train!(loss, params(ann), [(trainingInputs', trainingTargets')], 
-# ADAM(learningRate));
-#  # Aumentamos el numero de ciclo en 1
-#  numEpoch += 1;
-#  # Calculamos las metricas en este ciclo
-#  (trainingLoss, trainingAccuracy, testLoss, testAccuracy) = 
-# calculateMetrics();
-#  # y almacenamos los valores de loss y precision en este ciclo
-#  push!(trainingLosses, trainingLoss);
-#  push!(trainingAccuracies, trainingAccuracy);
-#  push!(testLosses, testLoss);
-#  push!(testAccuracies, testAccuracy);
-#  end;
-# Downloaded by Javier Rodríguez (javirr.2003@gmail.com)
-# lOMoARcPSD|11277783
-#  return (ann, trainingLosses, testLosses, trainingAccuracies, 
-# testAccuracies);
-# end;
-# # Funcion para entrenar RR.NN.AA. con conjuntos de entrenamiento, validacion y 
-# test
-# # Es la funcion anterior, modificada para calcular errores en el conjunto de 
-# validacion, y parar el entrenamiento si es necesario
-# function trainClassANN(topology::Array{Int64,1},
-#  trainingInputs::Array{Float64,2}, trainingTargets::Array{Bool,2},
-#  validationInputs::Array{Float64,2}, validationTargets::Array{Bool,2},
-#  testInputs::Array{Float64,2}, testTargets::Array{Bool,2};
-#  maxEpochs::Int64=1000, minLoss::Float64=0.0, learningRate::Float64=0.1, 
-# maxEpochsVal::Int64=6, showText::Bool=false)
-#  # Se supone que tenemos cada patron en cada fila
-#  # Comprobamos que el numero de filas (numero de patrones) coincide tanto en 
-# entrenamiento como en validation como test
-#  @assert(size(trainingInputs,1)==size(trainingTargets,1));
-#  @assert(size(validationInputs,1)==size(validationTargets,1));
-#  @assert(size(testInputs,1)==size(testTargets,1));
-#  # Comprobamos que el numero de columnas coincide en los grupos de 
-# entrenamiento, validacion y test
- 
-# @assert(size(trainingInputs,2)==size(validationInputs,2)==size(testInputs,2));
- 
-# @assert(size(trainingTargets,2)==size(validationTargets,2)==size(testTargets,2))
-# ;
-#  # Creamos la RNA
-#  ann = buildClassANN(size(trainingInputs,2), topology, 
-# size(trainingTargets,2));
-#  # Definimos la funcion de loss
-#  loss(x,y) = (size(y,1) == 1) ? Losses.binarycrossentropy(ann(x),y) : 
-# Losses.crossentropy(ann(x),y);
-#  # Creamos los vectores con los valores de loss y de precision en cada ciclo
-#  trainingLosses = Float64[];
-#  trainingAccuracies = Float64[];
-#  validationLosses = Float64[];
-#  validationAccuracies = Float64[];
-#  testLosses = Float64[];
-#  testAccuracies = Float64[];
-#  # Empezamos en el ciclo 0
-#  numEpoch = 0;
-#  # Una funcion util para calcular los resultados y mostrarlos por pantalla
-#  function calculateMetrics()
-#  # Calculamos el loss en entrenamiento y test. Para ello hay que pasar 
-# las matrices traspuestas (cada patron en una columna)
-#  trainingLoss = loss(trainingInputs', trainingTargets');
-#  validationLoss = loss(validationInputs', validationTargets');
-#  testLoss = loss(testInputs', testTargets');
-# Downloaded by Javier Rodríguez (javirr.2003@gmail.com)
-# lOMoARcPSD|11277783
-#  # Calculamos la salida de la RNA en entrenamiento y test. Para ello hay 
-# que pasar la matriz de entradas traspuesta (cada patron en una columna). La 
-# matriz de salidas tiene un patron en cada columna
-#  trainingOutputs = ann(trainingInputs');
-#  validationOutputs = ann(validationInputs');
-#  testOutputs = ann(testInputs');
-#  # Para calcular la precision, ponemos 2 opciones aqui equivalentes:
-#  # Pasar las matrices con los datos en las columnas. La matriz de 
-# salidas ya tiene un patron en cada columna
-#  trainingAcc = accuracy(trainingOutputs, 
-# Array{Bool,2}(trainingTargets'); dataInRows=false);
-#  validationAcc = accuracy(validationOutputs,
-# Array{Bool,2}(validationTargets'); dataInRows=false);
-#  testAcc = accuracy(testOutputs, Array{Bool,2}(testTargets');
-#  dataInRows=false);
-#  # Pasar las matrices con los datos en las filas. Hay que trasponer la 
-# matriz de salidas de la RNA, puesto que cada dato esta en una fila
-#  trainingAcc = accuracy(Array{Float64,2}(trainingOutputs'), 
-# trainingTargets; dataInRows=true);
-#  validationAcc = accuracy(Array{Float64,2}(validationOutputs'), 
-# validationTargets; dataInRows=true);
-#  testAcc = accuracy(Array{Float64,2}(testOutputs'), 
-# testTargets; dataInRows=true);
-#  # Mostramos por pantalla el resultado de este ciclo de entrenamiento si 
-# nos lo han indicado
-#  if showText
-#  println("Epoch ", numEpoch, ": Training loss: ", trainingLoss, ", 
-# accuracy: ", 100*trainingAcc, " % - Validation loss: ", validationLoss, ", 
-# accuracy: ", 100*validationAcc, " % - Test loss: ", testLoss, ", accuracy: ", 
-# 100*testAcc, " %");
-#  end;
-#  return (trainingLoss, trainingAcc, validationLoss, validationAcc, 
-# testLoss, testAcc)
-#  end;
-#  # Calculamos las metricas para el ciclo 0 (sin entrenar nada)
-#  (trainingLoss, trainingAccuracy, validationLoss, validationAccuracy, 
-# testLoss, testAccuracy) = calculateMetrics();
-#  # y almacenamos los valores de loss y precision en este ciclo
-#  push!(trainingLosses, trainingLoss);
-#  push!(trainingAccuracies, trainingAccuracy);
-#  push!(validationLosses, validationLoss);
-#  push!(validationAccuracies, validationAccuracy);
-#  push!(testLosses, testLoss);
-#  push!(testAccuracies, testAccuracy);
-#  # Numero de ciclos sin mejorar el error de validacion y el mejor error de 
-# validation encontrado hasta el momento
-#  numEpochsValidation = 0; bestValidationLoss = validationLoss;
-#  # Cual es la mejor ann que se ha conseguido
-#  bestANN = deepcopy(ann);
-#  # Entrenamos hasta que se cumpla una condicion de parada
-#  while (numEpoch<maxEpochs) && (trainingLoss>minLoss) && 
-# Downloaded by Javier Rodríguez (javirr.2003@gmail.com)
-# lOMoARcPSD|11277783
-# (numEpochsValidation<maxEpochsVal)
-#  # Entrenamos 1 ciclo. Para ello hay que pasar las matrices traspuestas 
-# (cada patron en una columna)
-#  Flux.train!(loss, params(ann), [(trainingInputs', trainingTargets')], 
-# ADAM(learningRate));
-#  # Aumentamos el numero de ciclo en 1
-#  numEpoch += 1;
-#  # Calculamos las metricas en este ciclo
-#  (trainingLoss, trainingAccuracy, validationLoss, validationAccuracy, 
-# testLoss, testAccuracy) = calculateMetrics();
-#  # y almacenamos los valores de loss y precision en este ciclo
-#  push!(trainingLosses, trainingLoss);
-#  push!(trainingAccuracies, trainingAccuracy);
-#  push!(validationLosses, validationLoss);
-#  push!(validationAccuracies, validationAccuracy);
-#  push!(testLosses, testLoss);
-#  push!(testAccuracies, testAccuracy);
-#  # Aplicamos la parada temprana
-#  if (validationLoss<bestValidationLoss)
-#  bestValidationLoss = validationLoss;
-#  numEpochsValidation = 0;
-#  bestANN = deepcopy(ann);
-#  else
-#  numEpochsValidation += 1;
-#  end;
-#  end;
-#  return (bestANN, trainingLosses, validationLosses, testLosses, 
-# trainingAccuracies, validationAccuracies, testAccuracies);
-# end;
-
-
-
 function trainClassANN(topology::AbstractArray{<:Int,1}, trainingDataset::Tuple{AbstractArray{<:Real,2}, AbstractArray{Bool,2}}; validationDataset::Tuple{AbstractArray{<:Real,2}, AbstractArray{Bool,2}}= (Array{eltype(trainingDataset[1]),2}(undef,0,0), falses(0,0)), testDataset::Tuple{AbstractArray{<:Real,2}, AbstractArray{Bool,2}}= (Array{eltype(trainingDataset[1]),2}(undef,0,0), falses(0,0)), transferFunctions::AbstractArray{<:Function,1}=fill(σ, length(topology)), maxEpochs::Int=1000, minLoss::Real=0.0, learningRate::Real=0.01, maxEpochsVal::Int=20)
     inputs, targets = trainingDataset
     # ann = buildClassANN(size(inputs, 2), topology, size(targets, 2), transferFunctions=transferFunctions)
@@ -388,29 +180,32 @@ function trainClassANN(topology::AbstractArray{<:Int,1}, trainingDataset::Tuple{
     @showprogress for epoch in 1:maxEpochs
         Flux.train!(loss, ann, [(inputs, targets)], opt_state)
         train_loss = loss(ann, inputs, targets)
-        validation_loss = loss(ann, validationDataset...)
         test_loss = loss(ann, testDataset...)
         push!(train_losses, train_loss)
-        push!(validation_losses, validation_loss)
         push!(test_losses, test_loss)
 
-        if validation_loss ≤ minLoss
-            println("Pérdida mínima alcanzada después de $epoch ciclos.")
-            break
-        end
-
-        # Pa los retrasaos
-        # Arriba se mira que no MEJORE en 20 veces, cuanto MAYOR sea el loss, peor es, abajo se updatea el loss
-        if validation_loss >= bestValLoss
-            counter += 1
-            if counter % maxEpochsVal == 0
-                return bestAnn, train_losses, validation_losses, test_losses, bestValLoss, bestValLossEpoch
+        if validationDataset != (Array{eltype(trainingDataset[1]),2}(undef,0,0), falses(0,0))
+            validation_loss = loss(ann, validationDataset...)
+            push!(validation_losses, validation_loss)
+            
+            if validation_loss ≤ minLoss
+                println("Pérdida mínima alcanzada después de $epoch ciclos.")
+                break
             end
-        else
-            counter = 0
-            bestValLoss = validation_loss
-            bestValLossEpoch = epoch
-            bestAnn = deepcopy(ann)
+
+            # Pa los retrasaos
+            # Arriba se mira que no MEJORE en 20 veces, cuanto MAYOR sea el loss, peor es, abajo se updatea el loss
+            if validation_loss >= bestValLoss
+                counter += 1
+                if counter % maxEpochsVal == 0
+                    return bestAnn, train_losses, validation_losses, test_losses, bestValLoss, bestValLossEpoch
+                end
+            else
+                counter = 0
+                bestValLoss = validation_loss
+                bestValLossEpoch = epoch
+                bestAnn = deepcopy(ann)
+            end
         end
     end
     return bestAnn, train_losses, validation_losses, test_losses, bestValLoss, bestValLossEpoch
@@ -621,8 +416,7 @@ confusionMatrix(outputs::AbstractArray{Float64,1}, targets::AbstractArray{Bool,1
      F1 = sum(weights.*F1);
      else
      # No realizo la media tal cual con la funcion mean, porque puede haber clases sin instancias
-     # En su lugar, realizo la media solamente de las clases que tengan 
-    instancias
+     # En su lugar, realizo la media solamente de las clases que tengan instancias
      numClassesWithInstances = sum(numInstancesFromEachClass.>0);
      recall = sum(recall)/numClassesWithInstances;
      specificity = sum(specificity)/numClassesWithInstances;
@@ -630,12 +424,10 @@ confusionMatrix(outputs::AbstractArray{Float64,1}, targets::AbstractArray{Bool,1
      NPV = sum(NPV)/numClassesWithInstances;
      F1 = sum(F1)/numClassesWithInstances;
      end;
-     # Precision y tasa de error las calculamos con las funciones definidas 
-    previamente
-     acc = accuracy(outputs, targets; dataInRows=true);
+     # Precision y tasa de error las calculamos con las funciones definidas previamente
+     acc = accuracy(outputs, targets);
      errorRate = 1 - acc;
-     return (acc, errorRate, recall, specificity, precision, NPV, F1, 
-    confMatrix);
+     return (acc, errorRate, recall, specificity, precision, NPV, F1, confMatrix);
      end;
     end;
     
@@ -831,9 +623,22 @@ function modelCrossValidation(modelType::Symbol, modelHyperparameters::Dict,
                         # dividimos el conjunto de entrenamiento en entrenamiento+validacion
                         # Para ello, hacemos un hold out
                         (trainingIndices, validationIndices) = holdOut(size(trainingInputs,1), modelHyperparameters["validationRatio"]*size(trainingInputs,1)/size(inputs,1));
+                        validationInputs = trainingInputs[validationIndices,:];
+                        validationTargets = trainingTargets[validationIndices,:];
+                        trainingInputs = trainingInputs[trainingIndices,:];
+                        trainingTargets = trainingTargets[trainingIndices,:];
                         # Con estos indices, se pueden crear los vectores finales que vamos a usar para entrenar una RNA
                         # Entrenamos la RNA, teniendo cuidado de codificar las salidas deseadas correctamente
-                        ann, = trainClassANN(modelHyperparameters["topology"], trainingDataset=(trainingInputs[trainingIndices,:]', trainingTargets[trainingIndices,:]'), validationDataset=(trainingInputs[validationIndices,:]', trainingTargets[validationIndices,:]'), testDataset=(testInputs[1,:]', Matrix{Float32}(reshape(testTargets[1,:], 1, :))), maxEpochs=modelHyperparameters["maxEpochs"], learningRate=modelHyperparameters["learningRate"]);
+                        # ann, = trainClassANN(modelHyperparameters["topology"], trainingDataset=(trainingInputs[trainingIndices,:]', trainingTargets[trainingIndices,:]'), validationDataset=(trainingInputs[validationIndices,:]', trainingTargets[validationIndices,:]'), testDataset=(testInputs[1,:]', Matrix{Float32}(reshape(testTargets[1,:], 1, :))), maxEpochs=modelHyperparameters["maxEpochs"], learningRate=modelHyperparameters["learningRate"]);
+                        testInputsMatrix = Matrix{Float32}(testInputs[1, :]')  # Convertir las entradas a tipo Float32
+                        testTargetsMatrix = Matrix{Bool}(reshape(testTargets[1, :], 1, :))
+                        ann, = trainClassANN(modelHyperparameters["topology"],
+                            (trainingInputs', trainingTargets'),
+                            validationDataset=(validationInputs', validationTargets'),
+                            testDataset=(testInputsMatrix', testTargetsMatrix'),
+                            maxEpochs=modelHyperparameters["maxEpochs"],
+                            learningRate=modelHyperparameters["learningRate"],
+                            maxEpochsVal=modelHyperparameters["maxEpochsVal"]);
                     else
                         # Si no se desea usar conjunto de validacion, se entrena unicamente con conjuntos de entrenamiento y test,
                         # teniendo cuidado de codificar las salidas deseadas correctamente
@@ -841,7 +646,7 @@ function modelCrossValidation(modelType::Symbol, modelHyperparameters::Dict,
                         testTargetsMatrix = Matrix{Bool}(reshape(testTargets[1, :], 1, :)) 
                         ann, = trainClassANN(modelHyperparameters["topology"],
                             (trainingInputs', trainingTargets'),
-                            validationDataset=(testInputs', testTargets'),
+                            # validationDataset=(testInputs', testTargets'),
                             testDataset=(testInputsMatrix', testTargetsMatrix'),
                             maxEpochs=modelHyperparameters["maxEpochs"], 
                             learningRate=modelHyperparameters["learningRate"],
