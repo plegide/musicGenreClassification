@@ -3,7 +3,7 @@ using Statistics
 using WAV
 using FileIO
 
-function audioFft(audio_file_path::AbstractString, genre::AbstractString)
+function audioFft(audio_file_path::AbstractString)
     # Lee el archivo de audio
     audio_data, Fs = wavread(audio_file_path)
 
@@ -18,17 +18,27 @@ function audioFft(audio_file_path::AbstractString, genre::AbstractString)
         @assert(mean(abs.(senalFrecuencia[2:Int((n+1)/2)] .- senalFrecuencia[end:-1:(Int((n-1)/2)+2)]))<1e-8);
         senalFrecuencia = senalFrecuencia[1:(Int((n+1)/2))];
     end;
-    
-    #Comprueba si el archivo existe, si no lo crea.
-    file_path = "genres.data"
-    if !isfile(file_path)
-        touch(file_path)
-    end
-    #Escribe en el archivo la media, la std y el genero del audio 
-    open(file_path, "a") do file
-        write(file, "$(mean(senalFrecuencia)),$(std(senalFrecuencia)),$(genre)\n")
-    end
+    return mean(senalFrecuencia), std(senalFrecuencia)
 end;
+
+function compute_rms(filename::String)
+    # Load the WAV file
+    wav_data, sample_rate = wavread(filename)
+
+    # Extract the audio data from the WAV file
+    audio_data = vec(wav_data)
+
+    # Square the values
+    squared_values = audio_data .^ 2
+
+    # Compute the mean of the squared values
+    mean_squared = mean(squared_values)
+
+    # Take the square root of the mean squared value
+    rms = sqrt(mean_squared)
+
+    return rms
+end
 
 println("[!] Processing audio files")
 
@@ -36,6 +46,11 @@ genres = readdir("segments")
 
 # Itera sobre los subdirectorios que hay dentro de segments (uno por cada genero) y llama a la function 
 # audioFft sobre cada uno de los segmentos de audio
+file_path = "aprox2.data"
+if !isfile(file_path)
+    touch(file_path)
+end
+
 for genre in genres
     if(isdir(joinpath("segments", genre)) == false)
         continue
@@ -43,7 +58,11 @@ for genre in genres
     for audio in readdir(joinpath("segments", genre))
         if endswith(audio, ".wav")
             try
-                audioFft(joinpath("segments", genre, audio), genre)
+                meanSF, stdSF = audioFft(joinpath("segments", genre, audio))
+                rms = compute_rms(joinpath("segments", genre, audio))
+                open(file_path, "a") do file
+                    write(file, "$(meanSF),$(stdSF),$(rms),$(genre)\n")
+                end
             catch
                 println("[x] Error processing $(audio)")
             end
@@ -52,4 +71,4 @@ for genre in genres
 end
 
 println("[!] Finished processing audio files")
-println("[!] Generated genres.data file with audio features")
+println("[!] Generated $(file_path) file with audio features")
