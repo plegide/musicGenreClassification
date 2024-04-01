@@ -208,7 +208,7 @@ function trainClassANN(topology::AbstractArray{<:Int,1}, trainingDataset::Tuple{
             end
         end
     end
-    return bestAnn, train_losses, validation_losses, test_losses, bestValLoss, bestValLossEpoch
+    return ann, train_losses, validation_losses, test_losses, bestValLoss, bestValLossEpoch
 end
 
 function trainClassANN(topology::AbstractArray{<:Int,1}, trainingDataset::Tuple{AbstractArray{<:Real,2}, AbstractArray{Bool,1}}; validationDataset::Tuple{AbstractArray{<:Real,2}, AbstractArray{Bool,1}}= (Array{eltype(trainingDataset[1]),2}(undef,0,0), falses(0)), testDataset::Tuple{AbstractArray{<:Real,2}, AbstractArray{Bool,1}}= (Array{eltype(trainingDataset[1]),2}(undef,0,0), falses(0)), transferFunctions::AbstractArray{<:Function,1}=fill(σ, length(topology)), maxEpochs::Int=1000, minLoss::Real=0.0, learningRate::Real=0.01, maxEpochsVal::Int=20)
@@ -249,7 +249,7 @@ function trainClassANN(topology::AbstractArray{<:Int,1}, trainingDataset::Tuple{
             end
         end
     end
-    return bestAnn, train_losses, validation_losses, test_losses, bestValLoss, bestValLossEpoch
+    return ann, train_losses, validation_losses, test_losses, bestValLoss, bestValLossEpoch
 end
 
 
