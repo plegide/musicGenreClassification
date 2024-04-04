@@ -2,13 +2,14 @@ using FFTW
 using Statistics
 using WAV
 using FileIO
+using MFCC
 
 function audioFft(audio_file_path::AbstractString)
     # Lee el archivo de audio
-    audio_data, Fs = wavread(audio_file_path)
+    wav_data, Fs = wavread(audio_file_path)
 
-    n = length(audio_data)
-    senalFrecuencia = abs.(fft(audio_data));
+    n = length(wav_data)
+    senalFrecuencia = abs.(fft(wav_data));
 
     # Coje solo la primera parte de la senal debido a que las dos mitades son simetricas
     if (iseven(n))
@@ -26,10 +27,10 @@ function compute_rms(filename::String)
     wav_data, sample_rate = wavread(filename)
 
     # Extract the audio data from the WAV file
-    audio_data = vec(wav_data)
+    wav_data = vec(wav_data)
 
     # Square the values
-    squared_values = audio_data .^ 2
+    squared_values = wav_data .^ 2
 
     # Compute the mean of the squared values
     mean_squared = mean(squared_values)
@@ -40,13 +41,39 @@ function compute_rms(filename::String)
     return rms
 end
 
+
+function compute_mfcc(filename::String)
+    wav_data, sample_rate = wavread(filename)
+    mfccs, _, _ = mfcc(wav_data, sample_rate)
+    mean_mfccs = mean(mfccs)
+    std_mfccs = std(mfccs)
+    return mean_mfccs, std_mfccs
+end
+
+function compute_zero_crossing_rate(filename::String)
+    wav_data, _ = wavread(filename)
+    zero_crossings = 0
+    # Calculate zero crossings
+    for i in 1:length(wav_data)-1
+        if (wav_data[i] > 0 && wav_data[i+1] < 0) || (wav_data[i] < 0 && wav_data[i+1] > 0)
+            zero_crossings += 1
+        end
+    end
+    # Calculate zero crossing rate
+    zero_crossing_rate = zero_crossings / (length(wav_data) - 1)
+    return zero_crossing_rate
+
+end
+
+
+
 println("[!] Processing audio files")
 
 genres = readdir("segments")
 
 # Itera sobre los subdirectorios que hay dentro de segments (uno por cada genero) y llama a la function 
 # audioFft sobre cada uno de los segmentos de audio
-file_path = "aprox2.data"
+file_path = "aprox3.data"
 if !isfile(file_path)
     touch(file_path)
 end
@@ -60,8 +87,14 @@ for genre in genres
             try
                 meanSF, stdSF = audioFft(joinpath("segments", genre, audio))
                 rms = compute_rms(joinpath("segments", genre, audio))
+                meanMFCC, stdMFCC = compute_mfcc(joinpath("segments", genre, audio))
+                zeroCrossRate = compute_zero_crossing_rate(joinpath("segments", genre, audio))
+                if(isequal(meanSF, NaN) || isequal(stdSF, NaN) || isequal(rms, NaN) || isequal(meanMFCC, NaN) || isequal(stdMFCC, NaN) || isequal(zeroCrossRate, NaN))
+                    println("[x] Error processing $(audio)")
+                    continue
+                end
                 open(file_path, "a") do file
-                    write(file, "$(meanSF),$(stdSF),$(rms),$(genre)\n")
+                    write(file, "$(meanSF),$(stdSF),$(rms),$(meanMFCC),$(stdMFCC),$(zeroCrossRate),$(genre)\n")
                 end
             catch
                 println("[x] Error processing $(audio)")

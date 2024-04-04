@@ -180,9 +180,9 @@ function trainClassANN(topology::AbstractArray{<:Int,1}, trainingDataset::Tuple{
     @showprogress for epoch in 1:maxEpochs
         Flux.train!(loss, ann, [(inputs, targets)], opt_state)
         train_loss = loss(ann, inputs, targets)
-        test_loss = loss(ann, testDataset...)
+        # test_loss = loss(ann, testDataset...)
         push!(train_losses, train_loss)
-        push!(test_losses, test_loss)
+        # push!(test_losses, test_loss)
 
         if validationDataset != (Array{eltype(trainingDataset[1]),2}(undef,0,0), falses(0,0))
             validation_loss = loss(ann, validationDataset...)
