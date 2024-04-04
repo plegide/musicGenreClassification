@@ -180,9 +180,9 @@ function trainClassANN(topology::AbstractArray{<:Int,1}, trainingDataset::Tuple{
     @showprogress for epoch in 1:maxEpochs
         Flux.train!(loss, ann, [(inputs, targets)], opt_state)
         train_loss = loss(ann, inputs, targets)
-        test_loss = loss(ann, testDataset...)
+        # test_loss = loss(ann, testDataset...)
         push!(train_losses, train_loss)
-        push!(test_losses, test_loss)
+        # push!(test_losses, test_loss)
 
         if validationDataset != (Array{eltype(trainingDataset[1]),2}(undef,0,0), falses(0,0))
             validation_loss = loss(ann, validationDataset...)
@@ -208,7 +208,7 @@ function trainClassANN(topology::AbstractArray{<:Int,1}, trainingDataset::Tuple{
             end
         end
     end
-    return bestAnn, train_losses, validation_losses, test_losses, bestValLoss, bestValLossEpoch
+    return ann, train_losses, validation_losses, test_losses, bestValLoss, bestValLossEpoch
 end
 
 function trainClassANN(topology::AbstractArray{<:Int,1}, trainingDataset::Tuple{AbstractArray{<:Real,2}, AbstractArray{Bool,1}}; validationDataset::Tuple{AbstractArray{<:Real,2}, AbstractArray{Bool,1}}= (Array{eltype(trainingDataset[1]),2}(undef,0,0), falses(0)), testDataset::Tuple{AbstractArray{<:Real,2}, AbstractArray{Bool,1}}= (Array{eltype(trainingDataset[1]),2}(undef,0,0), falses(0)), transferFunctions::AbstractArray{<:Function,1}=fill(σ, length(topology)), maxEpochs::Int=1000, minLoss::Real=0.0, learningRate::Real=0.01, maxEpochsVal::Int=20)
@@ -249,7 +249,7 @@ function trainClassANN(topology::AbstractArray{<:Int,1}, trainingDataset::Tuple{
             end
         end
     end
-    return bestAnn, train_losses, validation_losses, test_losses, bestValLoss, bestValLossEpoch
+    return ann, train_losses, validation_losses, test_losses, bestValLoss, bestValLossEpoch
 end
 
 

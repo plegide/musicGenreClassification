@@ -11,7 +11,7 @@ Random.seed!(1);
 numFolds = 10;
 
 # Parametros principales de la RNA y del proceso de entrenamiento
-topology = [60,40]; # Dos capas ocultas con 4 neuronas la primera y 3 la segunda
+topology = [6, 6]; # Dos capas ocultas con 4 neuronas la primera y 3 la segunda
 learningRate = 0.01; # Tasa de aprendizaje
 maxEpochs = 1000; # Numero maximo de ciclos de entrenamiento
 validationRatio = 0.2; # Porcentaje de patrones que se usaran para validacion. Puede ser 0, para no usar validacion
@@ -25,23 +25,23 @@ kernelGamma = 2;
 C=1;
 
 # Parametros del arbol de decision
-maxDepth = 1;
+maxDepth = 6;
 
 # Parapetros de kNN
 numNeighbors = 3;
 
 # Cargamos el dataset
-dataset = readdlm("datasets/classicOrMetal/classicOrMetal.data",',');
-inputs = dataset[:,1:2];
+dataset = readdlm("datasets/aprox3/aprox3.3.data",',');
+inputs = dataset[:,1:6];
 # Preparamos las entradas y las salidas deseadas
 inputs = convert(Array{Float32,2}, inputs);
-targets = dataset[:,3];
+targets = dataset[:,7];
 
 # Normalizamos las entradas, a pesar de que algunas se vayan a utilizar para test
 
 normalizeMinMax!(inputs);
 
-# # Entrenamos las RR.NN.AA.
+# Entrenamos las RR.NN.AA.
 modelHyperparameters = Dict();
 modelHyperparameters["topology"] = topology;
 modelHyperparameters["learningRate"] = learningRate;
@@ -60,7 +60,7 @@ modelCrossValidation(:ANN, modelHyperparameters, inputs, targets, numFolds);
 # modelHyperparameters["C"] = C;
 # modelCrossValidation(:SVM, modelHyperparameters, inputs, targets, numFolds);
 
-# Entrenamos los arboles de decision
+# # Entrenamos los arboles de decision
 # modelCrossValidation(:DecisionTree, Dict("maxDepth" => maxDepth), inputs, 
 # targets, numFolds);
 
