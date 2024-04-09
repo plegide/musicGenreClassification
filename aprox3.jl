@@ -19,7 +19,7 @@ maxEpochsVal = 20; # Numero de ciclos en los que si no se mejora el loss en el c
 numRepetitionsAANTraining = 20; # Numero de veces que se va a entrenar la RNA para cada fold por el hecho de ser no determinístico el entrenamiento
 
 # Parametros del SVM
-kernel = "rbf";
+kernel = "sigmoid";
 kernelDegree = 3;
 kernelGamma = 2;
 C=1;
@@ -28,7 +28,7 @@ C=1;
 maxDepth = 6;
 
 # Parapetros de kNN
-numNeighbors = 3;
+numNeighbors = 10;
 
 # Cargamos el dataset
 dataset = readdlm("datasets/aprox3/aprox3.3.data",',');
@@ -42,23 +42,23 @@ targets = dataset[:,7];
 normalizeMinMax!(inputs);
 
 # Entrenamos las RR.NN.AA.
-modelHyperparameters = Dict();
-modelHyperparameters["topology"] = topology;
-modelHyperparameters["learningRate"] = learningRate;
-modelHyperparameters["validationRatio"] = validationRatio;
-modelHyperparameters["numExecutions"] = numRepetitionsAANTraining;
-modelHyperparameters["maxEpochs"] = maxEpochs;
-modelHyperparameters["maxEpochsVal"] = maxEpochsVal;
-modelCrossValidation(:ANN, modelHyperparameters, inputs, targets, numFolds);
+# modelHyperparameters = Dict();
+# modelHyperparameters["topology"] = topology;
+# modelHyperparameters["learningRate"] = learningRate;
+# modelHyperparameters["validationRatio"] = validationRatio;
+# modelHyperparameters["numExecutions"] = numRepetitionsAANTraining;
+# modelHyperparameters["maxEpochs"] = maxEpochs;
+# modelHyperparameters["maxEpochsVal"] = maxEpochsVal;
+# modelCrossValidation(:ANN, modelHyperparameters, inputs, targets, numFolds);
 
 
 # Entrenamos las SVM
-# modelHyperparameters = Dict();
-# modelHyperparameters["kernel"] = kernel;
-# modelHyperparameters["kernelDegree"] = kernelDegree;
-# modelHyperparameters["kernelGamma"] = kernelGamma;
-# modelHyperparameters["C"] = C;
-# modelCrossValidation(:SVM, modelHyperparameters, inputs, targets, numFolds);
+modelHyperparameters = Dict();
+modelHyperparameters["kernel"] = kernel;
+modelHyperparameters["kernelDegree"] = kernelDegree;
+modelHyperparameters["kernelGamma"] = kernelGamma;
+modelHyperparameters["C"] = C;
+modelCrossValidation(:SVM, modelHyperparameters, inputs, targets, numFolds);
 
 # # Entrenamos los arboles de decision
 # modelCrossValidation(:DecisionTree, Dict("maxDepth" => maxDepth), inputs, 
