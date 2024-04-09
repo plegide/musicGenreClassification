@@ -3,6 +3,8 @@ using Statistics
 using WAV
 using FileIO
 using MFCC
+using DSP
+using AcousticFeatures
 
 function audioFft(audio_file_path::AbstractString)
     # Lee el archivo de audio
@@ -66,6 +68,39 @@ function compute_zero_crossing_rate(filename::String)
 end
 
 
+# function compute_stft(audio, window_size, hop_size)
+#     # Calculate number of frames
+#     num_frames = 1 + div(size(audio, 1) - window_size, hop_size)
+    
+#     # Pre-allocate STFT matrix
+#     stft = zeros(Complex{Float64}, window_size ÷ 2 + 1, num_frames)
+    
+#     # Compute STFT
+#     for i in 1:num_frames
+#         frame_start = (i - 1) * hop_size + 1
+#         frame_end = frame_start + window_size - 1
+#         frame = audio[frame_start:frame_end, 1] .* hamming(window_size)
+#         stft[:, i] = fft(frame, window_size)[1:window_size ÷ 2 + 1]
+#     end
+    
+#     return stft
+# end
+
+# Compute spectral centroid
+function compute_spectral_centroid(filename::String)
+    wav_data, sample_rate = wavread(filename)
+    x = Score(SpectralCentroid(), wav_data; fs=sample_rate)
+    return x[1]
+
+end
+
+function compute_spectral_flatness(filename::String)
+    wav_data, sample_rate = wavread(filename)
+    x = Score(SpectralFlatness(), wav_data; fs=sample_rate)
+    return x[1]
+
+end
+
 
 println("[!] Processing audio files")
 
@@ -73,7 +108,7 @@ genres = readdir("segments")
 
 # Itera sobre los subdirectorios que hay dentro de segments (uno por cada genero) y llama a la function 
 # audioFft sobre cada uno de los segmentos de audio
-file_path = "aprox3.data"
+file_path = "aprox4.data"
 if !isfile(file_path)
     touch(file_path)
 end
@@ -89,12 +124,14 @@ for genre in genres
                 rms = compute_rms(joinpath("segments", genre, audio))
                 meanMFCC, stdMFCC = compute_mfcc(joinpath("segments", genre, audio))
                 zeroCrossRate = compute_zero_crossing_rate(joinpath("segments", genre, audio))
-                if(isequal(meanSF, NaN) || isequal(stdSF, NaN) || isequal(rms, NaN) || isequal(meanMFCC, NaN) || isequal(stdMFCC, NaN) || isequal(zeroCrossRate, NaN))
+                spectralCentroid = compute_spectral_centroid(joinpath("segments", genre, audio))
+                spectralFlatness = compute_spectral_flatness(joinpath("segments", genre, audio))
+                if(isequal(meanSF, NaN) || isequal(stdSF, NaN) || isequal(rms, NaN) || isequal(meanMFCC, NaN) || isequal(stdMFCC, NaN) || isequal(zeroCrossRate, NaN) || isequal(spectralCentroid, NaN) || isequal(spectralFlatness, NaN))
                     println("[x] Error processing $(audio)")
                     continue
                 end
                 open(file_path, "a") do file
-                    write(file, "$(meanSF),$(stdSF),$(rms),$(meanMFCC),$(stdMFCC),$(zeroCrossRate),$(genre)\n")
+                    write(file, "$(meanSF),$(stdSF),$(rms),$(meanMFCC),$(stdMFCC),$(zeroCrossRate),$(spectralCentroid),$(spectralFlatness),$(genre)\n")
                 end
             catch
                 println("[x] Error processing $(audio)")
