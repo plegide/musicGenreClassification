@@ -180,9 +180,9 @@ function trainClassANN(topology::AbstractArray{<:Int,1}, trainingDataset::Tuple{
     @showprogress for epoch in 1:maxEpochs
         Flux.train!(loss, ann, [(inputs, targets)], opt_state)
         train_loss = loss(ann, inputs, targets)
-        # test_loss = loss(ann, testDataset...)
+        test_loss = loss(ann, testDataset...)
         push!(train_losses, train_loss)
-        # push!(test_losses, test_loss)
+        push!(test_losses, test_loss)
 
         if validationDataset != (Array{eltype(trainingDataset[1]),2}(undef,0,0), falses(0,0))
             validation_loss = loss(ann, validationDataset...)
@@ -193,7 +193,6 @@ function trainClassANN(topology::AbstractArray{<:Int,1}, trainingDataset::Tuple{
                 break
             end
 
-            # Pa los retrasaos
             # Arriba se mira que no MEJORE en 20 veces, cuanto MAYOR sea el loss, peor es, abajo se updatea el loss
             if validation_loss >= bestValLoss
                 counter += 1
@@ -658,9 +657,9 @@ function modelCrossValidation(modelType::Symbol, modelHyperparameters::Dict,
                     
                     testTargets = testTargets .> 0.5
                     testOutPut = [testOutPut[i] for i in 1:length(testOutPut)];
-                    testTargets = [testTargets[i] for i in 1:length(testTargets)];
+                    testTargets2 = [testTargets[i] for i in 1:length(testTargets)];
                     # Calculamos las metricas correspondientes con la funcion desarrollada en la practica anterior
-                    (testAccuraciesEachRepetition[numTraining], _, _, _, _, _, testF1EachRepetition[numTraining], _) = confusionMatrix(vec(testOutPut), vec(testTargets));
+                    (testAccuraciesEachRepetition[numTraining], _, _, _, _, _, testF1EachRepetition[numTraining], _) = confusionMatrix(vec(testOutPut), vec(testTargets2));
                 end;
     
                 # Calculamos el valor promedio de todos los entrenamientos de este fold

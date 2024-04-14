@@ -16,7 +16,7 @@ learningRate = 0.01; # Tasa de aprendizaje
 maxEpochs = 1000; # Numero maximo de ciclos de entrenamiento
 validationRatio = 0.2; # Porcentaje de patrones que se usaran para validacion. Puede ser 0, para no usar validacion
 maxEpochsVal = 20; # Numero de ciclos en los que si no se mejora el loss en el conjunto de validacion, se para el entrenamiento
-numRepetitionsAANTraining = 20; # Numero de veces que se va a entrenar la RNA para cada fold por el hecho de ser no determinístico el entrenamiento
+numRepetitionsAANTraining = 50; # Numero de veces que se va a entrenar la RNA para cada fold por el hecho de ser no determinístico el entrenamiento
 
 # Parametros del SVM
 kernel = "sigmoid";
@@ -28,14 +28,14 @@ C=1;
 maxDepth = 6;
 
 # Parapetros de kNN
-numNeighbors = 10;
+numNeighbors = 4;
 
 # Cargamos el dataset
-dataset = readdlm("datasets/aprox3/aprox3.3.data",',');
-inputs = dataset[:,1:6];
+dataset = readdlm("datasets/aprox4/aprox4.1.data",',');
+inputs = dataset[:,1:8];
 # Preparamos las entradas y las salidas deseadas
 inputs = convert(Array{Float32,2}, inputs);
-targets = dataset[:,7];
+targets = dataset[:,9];
 
 # Normalizamos las entradas, a pesar de que algunas se vayan a utilizar para test
 
@@ -52,19 +52,19 @@ normalizeMinMax!(inputs);
 # modelCrossValidation(:ANN, modelHyperparameters, inputs, targets, numFolds);
 
 
-# Entrenamos las SVM
-modelHyperparameters = Dict();
-modelHyperparameters["kernel"] = kernel;
-modelHyperparameters["kernelDegree"] = kernelDegree;
-modelHyperparameters["kernelGamma"] = kernelGamma;
-modelHyperparameters["C"] = C;
-modelCrossValidation(:SVM, modelHyperparameters, inputs, targets, numFolds);
+# # Entrenamos las SVM
+# modelHyperparameters = Dict();
+# modelHyperparameters["kernel"] = kernel;
+# modelHyperparameters["kernelDegree"] = kernelDegree;
+# modelHyperparameters["kernelGamma"] = kernelGamma;
+# modelHyperparameters["C"] = C;
+# modelCrossValidation(:SVM, modelHyperparameters, inputs, targets, numFolds);
 
 # # Entrenamos los arboles de decision
 # modelCrossValidation(:DecisionTree, Dict("maxDepth" => maxDepth), inputs, 
 # targets, numFolds);
 
 # Entrenamos los kNN
-# modelCrossValidation(:kNN, Dict("numNeighbors" => numNeighbors), inputs, 
-# targets, numFolds);
+modelCrossValidation(:kNN, Dict("numNeighbors" => numNeighbors), inputs, 
+targets, numFolds);
 
