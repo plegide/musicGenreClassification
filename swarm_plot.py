@@ -102,11 +102,44 @@ data = [
     ["DT", 70.00, 3],
     ["DT", 72.24, 3],
     ["DT", 75.31, 3],
+
+    ["ANN", 82.77, 4],
+    ["ANN", 80.97, 4],
+    ["ANN", 80.77, 4],
+    ["ANN", 80.45, 4],
+    ["ANN", 79.54, 4],
+    ["ANN", 80.57, 4],
+    ["ANN", 81.98, 4],
+    ["ANN", 78.67, 4],
+
+    ["KNN", 78.99, 4],
+    ["KNN", 78.68, 4],
+    ["KNN", 77.86, 4],
+    ["KNN", 77.49, 4],
+    ["KNN", 77.20, 4],
+    ["KNN", 76.77, 4],
+    ["KNN", 76.83, 4],
+
+    ["SVM", 66.96, 4],
+    ["SVM", 60.0, 4],
+    ["SVM", 66.95, 4],
+    ["SVM", 1.30, 4],
+    ["SVM", 75.20, 4],
+    ["SVM", 61.98, 4],
+    ["SVM", 71.00, 4],
+    ["SVM", 3.32, 4],
+
+    ["DT", 29.79, 4],
+    ["DT", 41.67, 4],
+    ["DT", 47.57, 4],
+    ["DT", 54.44, 4],
+    ["DT", 55.89, 4],
+    ["DT", 60.07, 4],
 ]
 
 df = pd.DataFrame(data, columns=['Modelo de aprendizaje automático', 'Precisión', 'Aproximación'])
 
-for i in range(1,4):
+for i in range(1,5):
     aprox_data = df[df['Aproximación'] == i]
 # Create a combined swarmplot with boxes
     plt.figure(figsize=(10, 6))
