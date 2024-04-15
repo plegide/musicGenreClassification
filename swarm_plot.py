@@ -220,16 +220,16 @@ data = [
     ["SVM rbf C=200", 83.39, 5],
     ["SVM rbf C=200", 83.99, 5],
 
-    ["DT", 74.22, 5],
-    ["DT", 72.79, 5],
-    ["DT", 73.27, 5],
-    ["DT", 76.61, 5],
-    ["DT", 75.89, 5],
-    ["DT", 73.03, 5],
-    ["DT", 73.21, 5],
-    ["DT", 73.92, 5],
-    ["DT", 74.88, 5],
-    ["DT", 76.08, 5],
+    ["DT maxDepth=20", 74.31, 5],
+    ["DT maxDepth=20", 73.60, 5],
+    ["DT maxDepth=20", 73.72, 5],
+    ["DT maxDepth=20", 74.19, 5],
+    ["DT maxDepth=20", 73.72, 5],
+    ["DT maxDepth=20", 77.90, 5],
+    ["DT maxDepth=20", 75.63, 5],
+    ["DT maxDepth=20", 73.60, 5],
+    ["DT maxDepth=20", 76.11, 5],
+    ["DT maxDepth=20", 75.75, 5],
 ]
 
 df = pd.DataFrame(data, columns=['Modelo de aprendizaje automático', 'Precisión', 'Aproximación'])
