@@ -113,6 +113,18 @@ function compute_permutation_entropy(filename::String)
     return x[1]
 end
 
+function compute_energy(filename::String)
+    wav_data, sample_rate = wavread(filename)
+    x = Score(Energy(), wav_data; fs=sample_rate)
+    return x[1]
+end
+
+function compute_sound_pressure(filename::String)
+    wav_data, sample_rate = wavread(filename)
+    x = Score(SoundPressureLevel(), wav_data; fs=sample_rate)
+    return x[1]
+end
+
 
 
 
@@ -142,12 +154,14 @@ for genre in genres
                 spectralFlatness = compute_spectral_flatness(joinpath("segments", genre, audio))
                 myriad = compute_myriad(joinpath("segments", genre, audio))
                 permutation_entropy = compute_permutation_entropy(joinpath("segments", genre, audio))
-                if(isequal(meanSF, NaN) || isequal(stdSF, NaN) || isequal(rms, NaN) || isequal(meanMFCC, NaN) || isequal(stdMFCC, NaN) || isequal(zeroCrossRate, NaN) || isequal(spectralCentroid, NaN) || isequal(spectralFlatness, NaN) || isequal(permutation_entropy, NaN) || isequal(myriad, NaN))
+                energy = compute_energy(joinpath("segments", genre, audio))
+                sound_pressure = compute_sound_pressure(joinpath("segments", genre, audio))
+                if(isequal(meanSF, NaN) || isequal(stdSF, NaN) || isequal(rms, NaN) || isequal(meanMFCC, NaN) || isequal(stdMFCC, NaN) || isequal(zeroCrossRate, NaN) || isequal(spectralCentroid, NaN) || isequal(spectralFlatness, NaN) || isequal(permutation_entropy, NaN) || isequal(myriad, NaN) || isequal(energy, NaN) || isequal(sound_pressure, NaN))
                     println("[x] Error processing $(audio)")
                     continue
                 end
                 open(file_path, "a") do file
-                    write(file, "$(meanSF),$(stdSF),$(rms),$(meanMFCC),$(stdMFCC),$(zeroCrossRate),$(spectralCentroid),$(spectralFlatness),$(myriad),$(permutation_entropy),$(genre)\n")
+                    write(file, "$(meanSF),$(stdSF),$(rms),$(meanMFCC),$(stdMFCC),$(zeroCrossRate),$(spectralCentroid),$(spectralFlatness),$(myriad),$(permutation_entropy),$(energy),$(sound_pressure),$(genre)\n")
                 end
             catch
                 println("[x] Error processing $(audio)")
