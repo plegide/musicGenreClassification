@@ -7,8 +7,10 @@ groups = aprox5_data.groupby(aprox5_data.iloc[:, -1])
 for i in range(3, 12):
     print(f"Column {i} Statistics by Last Column Value:")
     for name, group in groups:
-        pdMean = group.iloc[:, i].mean()
-        pdStd = group.iloc[:, i].std()
-        pdMin = group.iloc[:, i].min()
-        pdMax = group.iloc[:, i].max()
-        print(f"Genre {name}: Mean = {pdMean}, Std = {pdStd}, Min = {pdMin}, Max = {pdMax}")
+        pdMean = round(group.iloc[:, i].mean(), 2)
+        pdStd = round(group.iloc[:, i].std(), 2)
+        pdMin = round(group.iloc[:, i].min(), 2)
+        pdMax = round(group.iloc[:, i].max(), 2)
+        print(f"""
+            {name}                &{pdMean} &{pdStd}  &{pdMin}  &{pdMax}\\\ \hline
+        """)
