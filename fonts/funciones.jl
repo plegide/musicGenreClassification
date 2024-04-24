@@ -772,7 +772,7 @@ ann = Chain(
 
     MaxPool((2,2)),
 
-    x -> reshape(x, :, size(x, 4)),
+    # x -> reshape(x, :, size(x, 4)),
 
     Dense(288, 10),
 
@@ -784,7 +784,7 @@ ann = Chain(
     # Definimos la funcion de loss de forma similar a las prácticas de la asignatura
     loss(ann, x, y) = (size(y,1) == 1) ? Losses.binarycrossentropy(ann(x),y) : Losses.crossentropy(ann(x),y);
     # Para calcular la precisión, hacemos un "one cold encoding" de las salidas del modelo y de las salidas deseadas, y comparamos ambos vectores
-    accuracy(batch) = mean(onecold(ann(batch[1])) .== onecold(batch[2]));
+    accuracy(batch) = mean(onecold(ann(batch[1]')) .== onecold(batch[2]));
     # Un batch es una tupla (entradas, salidasDeseadas), asi que batch[1] son las entradas, y batch[2] son las salidas deseadas
 
     println("Ciclo 0: Precision en el conjunto de entrenamiento: ", accuracy(train_set) , " %");
