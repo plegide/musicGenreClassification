@@ -1,4 +1,4 @@
-using Flux, Flux.Losses, DelimitedFiles, Plots, ProgressMeter, Random, Statistics
+using Flux, Flux.Losses, DelimitedFiles, Plots, ProgressMeter, Random, Statistics, WAV
 
 #Práctica 2
 function oneHotEncoding(feature::AbstractArray{<:Any,1}, classes::AbstractArray{<:Any,1})
@@ -704,16 +704,34 @@ function cargar_datos(ruta_datos)
     return datos, etiquetas
 end;
 
+function audioFft(audio_file_path::AbstractString)
+    # Lee el archivo de audio
+    wav_data, Fs = wavread(audio_file_path)
 
+    n = length(wav_data)
+    senalFrecuencia = abs.(fft(wav_data));
+
+    # Coje solo la primera parte de la senal debido a que las dos mitades son simetricas
+    if (iseven(n))
+        @assert(mean(abs.(senalFrecuencia[2:Int(n/2)] .- senalFrecuencia[end:-1:(Int(n/2)+2)]))<1e-8);
+        senalFrecuencia = senalFrecuencia[1:(Int(n/2)+1)];
+    else
+        @assert(mean(abs.(senalFrecuencia[2:Int((n+1)/2)] .- senalFrecuencia[end:-1:(Int((n-1)/2)+2)]))<1e-8);
+        senalFrecuencia = senalFrecuencia[1:(Int((n+1)/2))];
+    end;
+    return senalFrecuencia
+end;
 
 
 # Convertir los datos de audio a un formato adecuado para la red neuronal
 function preprocesar_datos(datos)
     # Aquí puedes realizar cualquier preprocesamiento necesario, como extracción de características
     # Por ejemplo, si deseas trabajar con espectrogramas de los audios:
-    espectrogramas = [spectrogram(audio) for audio in datos]
+    espectrogramas = [audioFft(audio) for audio in datos]
     return espectrogramas
 end;
+
+
 
 
 function deepLearning(modelHyperparameters::Dict)
