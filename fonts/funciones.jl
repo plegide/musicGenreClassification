@@ -761,30 +761,24 @@ function deepLearning(modelHyperparameters::Dict)
 
 
     # Definir la arquitectura de la red neuronal
+
     ann = Chain(
-        #=
-        Conv((3, 1), 1=>16, pad=(1,1), funcionTransferenciaCapasConvolucionales),
 
-        MaxPool((2,2)),
+    # Capas Convolucionales
+    Conv((3,), 1=>16, relu),
+    MaxPool((2,)),
+    Conv((3,), 16=>32, relu),
+    MaxPool((2,)),
+    Conv((3,), 32=>32, relu),
+    MaxPool((2,)),
+    # Capa de Red Neuronal Totalmente Conectada
+    x -> reshape(x, :, size(x, 4)),  # Aplanar la salida de las capas convolucionales
+    Dense(288, 128, relu),
+    Dropout(0.5),  # Dropout para regularización
+    Dense(128, 10),  # 10 clases de salida para la clasificación
+    softmax
 
-        Conv((3, 1), 16=>32, pad=(1,1), funcionTransferenciaCapasConvolucionales),
-
-        MaxPool((2,2)),
-
-        Conv((3, 1), 32=>32, pad=(1,1), funcionTransferenciaCapasConvolucionales),
-
-        MaxPool((2,2)),
-
-        x -> reshape(x, :, size(x, 4)),
-
-        Dense(288, 10),
-
-        softmax
-        =#
-
-        #capas para audios
-
-    )
+)
 
 
     ann(train_set);
