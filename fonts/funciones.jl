@@ -681,3 +681,154 @@ function modelCrossValidation(modelType::Symbol, modelHyperparameters::Dict,
     
         return (mean(testAccuracies), std(testAccuracies), mean(testF1), std(testF1));
 end;
+
+
+
+
+
+
+
+# Cargar los datos de audio y etiquetas
+function cargar_datos(ruta_datos)
+    archivos = readdir(ruta_datos)
+    datos = []
+    etiquetas = []
+    for archivo in archivos
+        ruta = joinpath(ruta_datos, archivo)
+        if isfile(ruta) && endswith(archivo, ".wav")
+            audio = wavread(ruta)
+            push!(datos, audio)
+            push!(etiquetas, splitext(archivo)[1])  
+        end
+    end
+    return datos, etiquetas
+end;
+
+
+
+
+# Convertir los datos de audio a un formato adecuado para la red neuronal
+function preprocesar_datos(datos)
+    # Aquí puedes realizar cualquier preprocesamiento necesario, como extracción de características
+    # Por ejemplo, si deseas trabajar con espectrogramas de los audios:
+    espectrogramas = [spectrogram(audio) for audio in datos]
+    return espectrogramas
+end;
+
+
+function deepLearning(modelHyperparameters::Dict)
+
+    datos, generos = cargar_datos("datasets/aprox6/audios_segmentados");
+    datos_procesados = preprocesar_datos(datos);
+
+    #HAY QUE NORMALIZAR AQUI DATOS
+    #normalizeMinMax!(datos);
+
+    (trainingIndices, testIndices) = holdOut(size(datos_procesados,1), 0.2);
+    # Dividimos los datos
+    trainingInputs = datos_procesados[trainingIndices,:];
+    testInputs = datos_procesados[testIndices,:];
+    trainingTargets = generos[trainingIndices,:];
+    testTargets = generos[testIndices,:];
+
+
+
+
+    funcionTransferenciaCapasConvolucionales = relu;
+
+
+    # Definir la arquitectura de la red neuronal
+    ann = Chain(
+
+        Conv((3, 1), 1=>16, pad=(1,1), funcionTransferenciaCapasConvolucionales),
+
+        MaxPool((2,2)),
+
+        Conv((3, 1), 16=>32, pad=(1,1), funcionTransferenciaCapasConvolucionales),
+
+        MaxPool((2,2)),
+
+        Conv((3, 1), 32=>32, pad=(1,1), funcionTransferenciaCapasConvolucionales),
+
+        MaxPool((2,2)),
+
+        x -> reshape(x, :, size(x, 4)),
+
+        Dense(288, 10),
+
+        softmax
+
+
+    )
+
+
+    ann(trainingInputs);
+
+
+
+    # Definimos la funcion de loss de forma similar a las prácticas de la asignatura
+    loss(ann, x, y) = (size(y,1) == 1) ? Losses.binarycrossentropy(ann(x),y) : Losses.crossentropy(ann(x),y);
+    # Para calcular la precisión, hacemos un "one cold encoding" de las salidas del modelo y de las salidas deseadas, y comparamos ambos vectores
+    accuracy(batch) = mean(onecold(ann(batch[1])) .== onecold(batch[2]));
+    # Un batch es una tupla (entradas, salidasDeseadas), asi que batch[1] son las entradas, y batch[2] son las salidas deseadas
+
+    println("Ciclo 0: Precision en el conjunto de entrenamiento: ", accuracy , " %");
+
+    # Optimizador que se usa: ADAM, con esta tasa de aprendizaje:
+    opt_state = Flux.setup(Adam(0.001), ann);
+
+    println("Comenzando entrenamiento...")
+
+    mejorPrecision = -Inf;
+    criterioFin = false;
+    numCiclo = 0;
+    numCicloUltimaMejora = 0;
+    mejorModelo = nothing;
+
+    while !criterioFin
+
+        # Hay que declarar las variables globales que van a ser modificadas en el interior del bucle
+        global numCicloUltimaMejora, numCiclo, mejorPrecision, mejorModelo, criterioFin;
+
+        # Se entrena un ciclo
+        Flux.train!(loss, ann, trainingInputs, opt_state);
+
+        numCiclo += 1;
+
+        # Se calcula la precision en el conjunto de entrenamiento:
+        precisionEntrenamiento = mean(accuracy.(trainingInputs));
+        println("Ciclo ", numCiclo, ": Precision en el conjunto de entrenamiento: ", 100*precisionEntrenamiento, " %");
+
+        # Si se mejora la precision en el conjunto de entrenamiento, se calcula la de test y se guarda el modelo
+        if (precisionEntrenamiento >= mejorPrecision)
+            mejorPrecision = precisionEntrenamiento;
+            precisionTest = accuracy(testTargets);
+            println("   Mejora en el conjunto de entrenamiento -> Precision en el conjunto de test: ", 100*precisionTest, " %");
+            mejorModelo = deepcopy(ann);
+            numCicloUltimaMejora = numCiclo;
+        end
+
+        # Si no se ha mejorado en 5 ciclos, se baja la tasa de aprendizaje
+        if (numCiclo - numCicloUltimaMejora >= 5) && (opt_state.eta > 1e-6)
+            opt_state.eta /= 10.0
+            println("   No se ha mejorado en 5 ciclos, se baja la tasa de aprendizaje a ", opt_state.eta);
+            numCicloUltimaMejora = numCiclo;
+        end
+
+        # Criterios de parada:
+
+        # Si la precision en entrenamiento es lo suficientemente buena, se para el entrenamiento
+        if (precisionEntrenamiento >= 0.999)
+            println("   Se para el entenamiento por haber llegado a una precision de 99.9%")
+            criterioFin = true;
+        end
+
+        # Si no se mejora la precision en el conjunto de entrenamiento durante 10 ciclos, se para el entrenamiento
+        if (numCiclo - numCicloUltimaMejora >= 10)
+            println("   Se para el entrenamiento por no haber mejorado la precision en el conjunto de entrenamiento durante 10 ciclos")
+            criterioFin = true;
+        end
+    end
+
+
+end
