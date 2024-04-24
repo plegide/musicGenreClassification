@@ -722,7 +722,7 @@ function deepLearning(modelHyperparameters::Dict)
     datos_procesados = preprocesar_datos(datos);
 
     #HAY QUE NORMALIZAR AQUI DATOS
-    #normalizeMinMax!(datos);
+    normalizeMinMax!(datos_procesados);
 
     (trainingIndices, testIndices) = holdOut(size(datos_procesados,1), 0.2);
     # Dividimos los datos
@@ -730,6 +730,9 @@ function deepLearning(modelHyperparameters::Dict)
     testInputs = datos_procesados[testIndices,:];
     trainingTargets = generos[trainingIndices,:];
     testTargets = generos[testIndices,:];
+
+    train_set = (trainingInputs, trainingTargets);
+    test_set = (testInputs, testTargets);
 
 
 
@@ -739,7 +742,7 @@ function deepLearning(modelHyperparameters::Dict)
 
     # Definir la arquitectura de la red neuronal
     ann = Chain(
-
+        #=
         Conv((3, 1), 1=>16, pad=(1,1), funcionTransferenciaCapasConvolucionales),
 
         MaxPool((2,2)),
@@ -757,12 +760,14 @@ function deepLearning(modelHyperparameters::Dict)
         Dense(288, 10),
 
         softmax
+        =#
 
+        #capas para audios
 
     )
 
 
-    ann(trainingInputs);
+    ann(train_set);
 
 
 
@@ -772,7 +777,7 @@ function deepLearning(modelHyperparameters::Dict)
     accuracy(batch) = mean(onecold(ann(batch[1])) .== onecold(batch[2]));
     # Un batch es una tupla (entradas, salidasDeseadas), asi que batch[1] son las entradas, y batch[2] son las salidas deseadas
 
-    println("Ciclo 0: Precision en el conjunto de entrenamiento: ", accuracy , " %");
+    println("Ciclo 0: Precision en el conjunto de entrenamiento: ", accuracy.(train_set) , " %");
 
     # Optimizador que se usa: ADAM, con esta tasa de aprendizaje:
     opt_state = Flux.setup(Adam(0.001), ann);
@@ -791,7 +796,7 @@ function deepLearning(modelHyperparameters::Dict)
         global numCicloUltimaMejora, numCiclo, mejorPrecision, mejorModelo, criterioFin;
 
         # Se entrena un ciclo
-        Flux.train!(loss, ann, trainingInputs, opt_state);
+        Flux.train!(loss, ann, train_set, opt_state);
 
         numCiclo += 1;
 
@@ -802,7 +807,7 @@ function deepLearning(modelHyperparameters::Dict)
         # Si se mejora la precision en el conjunto de entrenamiento, se calcula la de test y se guarda el modelo
         if (precisionEntrenamiento >= mejorPrecision)
             mejorPrecision = precisionEntrenamiento;
-            precisionTest = accuracy(testTargets);
+            precisionTest = accuracy(test_set);
             println("   Mejora en el conjunto de entrenamiento -> Precision en el conjunto de test: ", 100*precisionTest, " %");
             mejorModelo = deepcopy(ann);
             numCicloUltimaMejora = numCiclo;

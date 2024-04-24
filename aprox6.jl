@@ -7,7 +7,6 @@ include("fonts/funciones.jl")
 
 Random.seed!(1);
 
-testRatio = 0.2;
 
 # Cargamos el dataset
 # JUAN CURRA
