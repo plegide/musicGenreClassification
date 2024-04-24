@@ -1,5 +1,7 @@
-using Flux, Flux.Losses, DelimitedFiles, Plots, ProgressMeter, Random, Statistics, WAV
-
+using Flux, DelimitedFiles, Plots, ProgressMeter, Random, Statistics, WAV, FFTW
+using Flux
+using Flux.Losses
+using Flux: onehotbatch, onecold
 #Práctica 2
 function oneHotEncoding(feature::AbstractArray{<:Any,1}, classes::AbstractArray{<:Any,1})
     numClasses = length(classes)
@@ -698,9 +700,9 @@ function cargar_datos(ruta_datos)
         for archivo in archivos
             ruta = joinpath(ruta_datos, genre, archivo)
             if isfile(ruta) && endswith(archivo, ".wav")
-                audio = wavread(ruta)
-                push!(datos, audio)
+                push!(datos, ruta)
                 push!(etiquetas, genre)
+            end
         end
     end
     return datos, etiquetas
@@ -737,14 +739,13 @@ end;
 
 
 function deepLearning(modelHyperparameters::Dict)
-
-    datos, generos = cargar_datos("datasets/aprox6/audios_segmentados");
+    datos, generos = cargar_datos("segments");
     datos_procesados = preprocesar_datos(datos);
 
-    #HAY QUE NORMALIZAR AQUI DATOS
-    normalizeMinMax!(datos_procesados);
+    datos_procesados_matrix = reduce(vcat, [x' for x in datos_procesados])
+    normalizeMinMax!(datos_procesados_matrix);
 
-    (trainingIndices, testIndices) = holdOut(size(datos_procesados,1), 0.2);
+    (trainingIndices, testIndices) = holdOut(size(datos_procesados_matrix,1), 0.2);
     # Dividimos los datos
     trainingInputs = datos_procesados[trainingIndices,:];
     testInputs = datos_procesados[testIndices,:];
@@ -754,36 +755,31 @@ function deepLearning(modelHyperparameters::Dict)
     train_set = (trainingInputs, trainingTargets);
     test_set = (testInputs, testTargets);
 
+GC.gc()
+funcionTransferenciaCapasConvolucionales = relu;
+# Definimos la red con la funcion Chain, que concatena distintas capas
+ann = Chain(
 
+    Conv((3, 1), 1=>16, pad=(1,1), funcionTransferenciaCapasConvolucionales),
 
+    MaxPool((2,2)),
 
-    funcionTransferenciaCapasConvolucionales = relu;
+    Conv((3, 1), 16=>32, pad=(1,1), funcionTransferenciaCapasConvolucionales),
 
+    MaxPool((2,2)),
 
-    # Definir la arquitectura de la red neuronal
+    Conv((3, 1), 32=>32, pad=(1,1), funcionTransferenciaCapasConvolucionales),
 
-    ann = Chain(
+    MaxPool((2,2)),
 
-    # Capas Convolucionales
-    Conv((3,), 1=>16, relu),
-    MaxPool((2,)),
-    Conv((3,), 16=>32, relu),
-    MaxPool((2,)),
-    Conv((3,), 32=>32, relu),
-    MaxPool((2,)),
-    # Capa de Red Neuronal Totalmente Conectada
-    x -> reshape(x, :, size(x, 4)),  # Aplanar la salida de las capas convolucionales
-    Dense(288, 128, relu),
-    Dropout(0.5),  # Dropout para regularización
-    Dense(128, 10),  # 10 clases de salida para la clasificación
+    x -> reshape(x, :, size(x, 4)),
+
+    Dense(288, 10),
+
     softmax
-
 )
 
-
-    ann(train_set);
-
-
+    # ann(train_set);
 
     # Definimos la funcion de loss de forma similar a las prácticas de la asignatura
     loss(ann, x, y) = (size(y,1) == 1) ? Losses.binarycrossentropy(ann(x),y) : Losses.crossentropy(ann(x),y);
@@ -791,7 +787,7 @@ function deepLearning(modelHyperparameters::Dict)
     accuracy(batch) = mean(onecold(ann(batch[1])) .== onecold(batch[2]));
     # Un batch es una tupla (entradas, salidasDeseadas), asi que batch[1] son las entradas, y batch[2] son las salidas deseadas
 
-    println("Ciclo 0: Precision en el conjunto de entrenamiento: ", accuracy.(train_set) , " %");
+    println("Ciclo 0: Precision en el conjunto de entrenamiento: ", accuracy(train_set) , " %");
 
     # Optimizador que se usa: ADAM, con esta tasa de aprendizaje:
     opt_state = Flux.setup(Adam(0.001), ann);
@@ -805,7 +801,6 @@ function deepLearning(modelHyperparameters::Dict)
     mejorModelo = nothing;
 
     while !criterioFin
-
         # Hay que declarar las variables globales que van a ser modificadas en el interior del bucle
         global numCicloUltimaMejora, numCiclo, mejorPrecision, mejorModelo, criterioFin;
 

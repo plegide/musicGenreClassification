@@ -9,7 +9,6 @@ Random.seed!(1);
 
 
 # Cargamos el dataset
-# JUAN CURRA
 
 
 # Entrenamos deepLearning

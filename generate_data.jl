@@ -134,7 +134,7 @@ genres = readdir("segments")
 
 # Itera sobre los subdirectorios que hay dentro de segments (uno por cada genero) y llama a la function 
 # audioFft sobre cada uno de los segmentos de audio
-file_path = "aprox5.data"
+file_path = "deep_learning.data"
 if !isfile(file_path)
     touch(file_path)
 end
