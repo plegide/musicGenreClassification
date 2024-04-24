@@ -690,15 +690,17 @@ end;
 
 # Cargar los datos de audio y etiquetas
 function cargar_datos(ruta_datos)
-    archivos = readdir(ruta_datos)
+    genres = readdir(ruta_datos)
     datos = []
     etiquetas = []
-    for archivo in archivos
-        ruta = joinpath(ruta_datos, archivo)
-        if isfile(ruta) && endswith(archivo, ".wav")
-            audio = wavread(ruta)
-            push!(datos, audio)
-            push!(etiquetas, splitext(archivo)[1])  
+    for genre in genres
+        archivos = readdir(joinpath(ruta_datos, genre))
+        for archivo in archivos
+            ruta = joinpath(ruta_datos, genre, archivo)
+            if isfile(ruta) && endswith(archivo, ".wav")
+                audio = wavread(ruta)
+                push!(datos, audio)
+                push!(etiquetas, genre)
         end
     end
     return datos, etiquetas
