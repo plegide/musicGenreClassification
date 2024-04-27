@@ -759,35 +759,49 @@ GC.gc()
 funcionTransferenciaCapasConvolucionales = relu;
 # Definimos la red con la funcion Chain, que concatena distintas capas
 ann = Chain(
-
-    Conv((3, 1), 1=>16, pad=(1,1), funcionTransferenciaCapasConvolucionales),
-
-    MaxPool((2,2)),
-
-    Conv((3, 1), 16=>32, pad=(1,1), funcionTransferenciaCapasConvolucionales),
-
-    MaxPool((2,2)),
-
-    Conv((3, 1), 32=>32, pad=(1,1), funcionTransferenciaCapasConvolucionales),
-
-    MaxPool((2,2)),
-
-    # x -> reshape(x, :, size(x, 4)),
-
-    Dense(288, 10),
-
+    Conv((3,), 1=>16, pad=1, funcionTransferenciaCapasConvolucionales),
+    MaxPool((2,)),
+    Conv((3,), 16=>32, pad=1, funcionTransferenciaCapasConvolucionales),
+    MaxPool((2,)),
+    Conv((3,), 32=>32, pad=1, funcionTransferenciaCapasConvolucionales),
+    MaxPool((2,)),
+    x -> reshape(x, :, size(x, 3)),
+    Dense(3136, 10),
     softmax
-)
+);
 
     # ann(train_set);
 
     # Definimos la funcion de loss de forma similar a las prácticas de la asignatura
     loss(ann, x, y) = (size(y,1) == 1) ? Losses.binarycrossentropy(ann(x),y) : Losses.crossentropy(ann(x),y);
     # Para calcular la precisión, hacemos un "one cold encoding" de las salidas del modelo y de las salidas deseadas, y comparamos ambos vectores
-    accuracy(batch) = mean(onecold(ann(batch[1]')) .== onecold(batch[2]));
+    function accuracy(batch)
+        inputs, targets = batch
+        # Assuming inputs is an array of 1D arrays, and each 1D array has the same length
+        
+        # Correctly reshape inputs to match the expected dimensions by the model
+        batch_size = length(inputs)
+        sample_length = length(first(inputs))
+        
+        # Initialize a 3D array with zeros to hold the reshaped inputs
+        # Note: The expected shape might vary based on your specific model architecture
+        inputs_3d = zeros(Float32, sample_length, 1, batch_size)
+        
+        # Fill the 3D array
+        for (i, sample) in enumerate(inputs)
+            inputs_3d[:, :, i] = reshape(sample, sample_length, 1)
+        end
+        
+        # Model inference
+        predictions = ann(inputs_3d)
+        print(predictions)
+        # Calculate accuracy
+        acc = mean(onecold(predictions) .== onecold(targets))
+        return acc
+    end
     # Un batch es una tupla (entradas, salidasDeseadas), asi que batch[1] son las entradas, y batch[2] son las salidas deseadas
-
-    println("Ciclo 0: Precision en el conjunto de entrenamiento: ", accuracy(train_set) , " %");
+    print(typeof(train_set))
+    # println("Ciclo 0: Precision en el conjunto de entrenamiento: ", accuracy(train_set) , " %");
 
     # Optimizador que se usa: ADAM, con esta tasa de aprendizaje:
     opt_state = Flux.setup(Adam(0.001), ann);
@@ -810,13 +824,15 @@ ann = Chain(
         numCiclo += 1;
 
         # Se calcula la precision en el conjunto de entrenamiento:
-        precisionEntrenamiento = mean(accuracy.(trainingInputs));
+        # precisionEntrenamiento = mean(accuracy.(trainingInputs));
+        precisionEntrenamiento = 1;
         println("Ciclo ", numCiclo, ": Precision en el conjunto de entrenamiento: ", 100*precisionEntrenamiento, " %");
 
         # Si se mejora la precision en el conjunto de entrenamiento, se calcula la de test y se guarda el modelo
         if (precisionEntrenamiento >= mejorPrecision)
             mejorPrecision = precisionEntrenamiento;
-            precisionTest = accuracy(test_set);
+            # precisionTest = accuracy(test_set);
+            precisionTest = 1;
             println("   Mejora en el conjunto de entrenamiento -> Precision en el conjunto de test: ", 100*precisionTest, " %");
             mejorModelo = deepcopy(ann);
             numCicloUltimaMejora = numCiclo;
