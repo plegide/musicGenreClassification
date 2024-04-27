@@ -696,6 +696,9 @@ function cargar_datos(ruta_datos)
     datos = []
     etiquetas = []
     for genre in genres
+        if(genre == ".gitignore")
+            continue
+        end
         archivos = readdir(joinpath(ruta_datos, genre))
         for archivo in archivos
             ruta = joinpath(ruta_datos, genre, archivo)
@@ -739,6 +742,7 @@ end;
 
 
 function deepLearning(modelHyperparameters::Dict)
+    N = 1000
     datos, generos = cargar_datos("segments");
     datos_procesados = preprocesar_datos(datos);
 
@@ -752,24 +756,36 @@ function deepLearning(modelHyperparameters::Dict)
     trainingTargets = generos[trainingIndices,:];
     testTargets = generos[testIndices,:];
 
-    train_set = (trainingInputs, trainingTargets);
+    # train_set = (trainingInputs, trainingTargets);
     test_set = (testInputs, testTargets);
 
-GC.gc()
-funcionTransferenciaCapasConvolucionales = relu;
 
-inputs = Array{Float32,3}(undef, 28*28, 1, N);
+
+inputs = Array{Float32,3}(undef, size(trainingInputs[1], 1), 1, N);
 for i in 1:N
-    inputs[:,1,i] .= reshape(train_set[:,:,1,i], 28*28);
+    inputs[:, :, i] = reshape(trainingInputs[i], (length(trainingInputs[i]),1))
 end;
+
+targets = Array{String,3}(undef, size(trainingTargets, 1), 1, N);
+for i in 1:N
+    targets[:, :, i] = reshape(trainingTargets, (length(trainingTargets),1))
+end;
+
+    train_set = (inputs, targets);
+
+
+
+print(size(inputs))
 println("Tamaño de la matriz de entrenamiento: ", size(inputs))
 println("   Longitud de la señal: ", size(inputs,1))
 println("   Numero de canales: ", size(inputs,2))
 println("   Numero de instancias: ", size(inputs,3))
 
+GC.gc()
+funcionTransferenciaCapasConvolucionales = relu;
+
 # Definimos la red con la funcion Chain, que concatena distintas capas
 ann = Chain(
-
     Conv((3,), 1=>16, pad=1, funcionTransferenciaCapasConvolucionales),
     MaxPool((2,)),
     Conv((3,), 16=>32, pad=1, funcionTransferenciaCapasConvolucionales),
@@ -777,17 +793,17 @@ ann = Chain(
     Conv((3,), 32=>32, pad=1, funcionTransferenciaCapasConvolucionales),
     MaxPool((2,)),
     x -> reshape(x, :, size(x, 3)),
-    Dense(3136, 10),
+    Dense(131072, 10),
     softmax
+);
 
-)
-
-    # ann(train_set);
+    ann(inputs);
+    print("Mera")
 
     # Definimos la funcion de loss de forma similar a las prácticas de la asignatura
     loss(ann, x, y) = (size(y,1) == 1) ? Losses.binarycrossentropy(ann(x),y) : Losses.crossentropy(ann(x),y);
     # Para calcular la precisión, hacemos un "one cold encoding" de las salidas del modelo y de las salidas deseadas, y comparamos ambos vectores
-    accuracy(batch) = mean(onecold(ann(batch[1]')) .== onecold(batch[2]));
+    accuracy(batch) = mean(onecold(ann(batch[1])) .== onecold(batch[2]));
     # Un batch es una tupla (entradas, salidasDeseadas), asi que batch[1] son las entradas, y batch[2] son las salidas deseadas
 
     println("Ciclo 0: Precision en el conjunto de entrenamiento: ", accuracy(train_set) , " %");
@@ -808,7 +824,7 @@ ann = Chain(
         global numCicloUltimaMejora, numCiclo, mejorPrecision, mejorModelo, criterioFin;
 
         # Se entrena un ciclo
-        Flux.train!(loss, ann, train_set, opt_state);
+        Flux.train!(loss, ann, inputs, opt_state);
 
         numCiclo += 1;
 
