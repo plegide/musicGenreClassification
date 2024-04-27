@@ -277,7 +277,7 @@ data = [
 
 df = pd.DataFrame(data, columns=['Modelo de aprendizaje automático', 'Precisión', 'Aproximación'])
 
-for i in range(1,6):
+for i in range(1,7):
     aprox_data = df[df['Aproximación'] == i]
 # Create a combined swarmplot with boxes
     plt.figure(figsize=(10, 6))
