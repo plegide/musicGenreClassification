@@ -696,6 +696,9 @@ function cargar_datos(ruta_datos)
     datos = []
     etiquetas = []
     for genre in genres
+        if(genre == ".gitignore")
+            continue
+        end
         archivos = readdir(joinpath(ruta_datos, genre))
         for archivo in archivos
             ruta = joinpath(ruta_datos, genre, archivo)
@@ -739,6 +742,7 @@ end;
 
 
 function deepLearning(modelHyperparameters::Dict)
+    N = 2240
     datos, generos = cargar_datos("segments");
     datos_procesados = preprocesar_datos(datos);
 
@@ -749,27 +753,41 @@ function deepLearning(modelHyperparameters::Dict)
     # Dividimos los datos
     trainingInputs = datos_procesados[trainingIndices,:];
     testInputs = datos_procesados[testIndices,:];
-    trainingTargets = generos[trainingIndices,:];
+    trainingTargets2 = generos[trainingIndices,:];
     testTargets = generos[testIndices,:];
 
-    train_set = (trainingInputs, trainingTargets);
+    # train_set = (trainingInputs, trainingTargets);
     test_set = (testInputs, testTargets);
 
-GC.gc()
-funcionTransferenciaCapasConvolucionales = relu;
+    
+    trainingTargets = oneHotEncoding(vec(trainingTargets2));
 
-inputs = Array{Float32,3}(undef, 28*28, 1, N);
+
+inputs = Array{Float32,3}(undef, size(trainingInputs[1], 1), 1, N);
 for i in 1:N
-    inputs[:,1,i] .= reshape(train_set[:,:,1,i], 28*28);
+    inputs[:, :, i] = reshape(trainingInputs[i], (length(trainingInputs[i]),1))
 end;
+    print(typeof(trainingTargets))
+    train_set = (inputs, trainingTargets);
+    print(size(train_set[1]))
+    print("\n")
+    print(size(train_set[2]))
+    print("\n")
+    print(typeof(train_set[2]))
+
+
+
+print(size(inputs))
 println("Tamaño de la matriz de entrenamiento: ", size(inputs))
 println("   Longitud de la señal: ", size(inputs,1))
 println("   Numero de canales: ", size(inputs,2))
 println("   Numero de instancias: ", size(inputs,3))
 
+GC.gc()
+funcionTransferenciaCapasConvolucionales = relu;
+
 # Definimos la red con la funcion Chain, que concatena distintas capas
 ann = Chain(
-
     Conv((3,), 1=>16, pad=1, funcionTransferenciaCapasConvolucionales),
     MaxPool((2,)),
     Conv((3,), 16=>32, pad=1, funcionTransferenciaCapasConvolucionales),
@@ -777,17 +795,16 @@ ann = Chain(
     Conv((3,), 32=>32, pad=1, funcionTransferenciaCapasConvolucionales),
     MaxPool((2,)),
     x -> reshape(x, :, size(x, 3)),
-    Dense(3136, 10),
+    Dense(131072, 1),
     softmax
+);
 
-)
-
-    # ann(train_set);
+    ann(inputs);
 
     # Definimos la funcion de loss de forma similar a las prácticas de la asignatura
     loss(ann, x, y) = (size(y,1) == 1) ? Losses.binarycrossentropy(ann(x),y) : Losses.crossentropy(ann(x),y);
-    # Para calcular la precisión, hacemos un "one cold encoding" de las salidas del modelo y de las salidas deseadas, y comparamos ambos vectores
-    accuracy(batch) = mean(onecold(ann(batch[1]')) .== onecold(batch[2]));
+    # loss(ann, train_set[1], train_set[2]);
+    accuracy(batch) = mean(onecold(ann(batch[1])) .== onecold(batch[2]));
     # Un batch es una tupla (entradas, salidasDeseadas), asi que batch[1] son las entradas, y batch[2] son las salidas deseadas
 
     println("Ciclo 0: Precision en el conjunto de entrenamiento: ", accuracy(train_set) , " %");
@@ -805,21 +822,19 @@ ann = Chain(
 
     while !criterioFin
         # Hay que declarar las variables globales que van a ser modificadas en el interior del bucle
-        global numCicloUltimaMejora, numCiclo, mejorPrecision, mejorModelo, criterioFin;
+        # global numCicloUltimaMejora, numCiclo, mejorPrecision, mejorModelo, criterioFin;
 
-        # Se entrena un ciclo
-        Flux.train!(loss, ann, train_set, opt_state);
-
+        Flux.train!(loss, ann, [(train_set[1], train_set[2]')], opt_state);
         numCiclo += 1;
 
         # Se calcula la precision en el conjunto de entrenamiento:
-        precisionEntrenamiento = mean(accuracy.(trainingInputs));
+        precisionEntrenamiento = mean(accuracy(train_set));
         println("Ciclo ", numCiclo, ": Precision en el conjunto de entrenamiento: ", 100*precisionEntrenamiento, " %");
 
         # Si se mejora la precision en el conjunto de entrenamiento, se calcula la de test y se guarda el modelo
         if (precisionEntrenamiento >= mejorPrecision)
             mejorPrecision = precisionEntrenamiento;
-            precisionTest = accuracy(test_set);
+            precisionTest = accuracy(train_set);
             println("   Mejora en el conjunto de entrenamiento -> Precision en el conjunto de test: ", 100*precisionTest, " %");
             mejorModelo = deepcopy(ann);
             numCicloUltimaMejora = numCiclo;
