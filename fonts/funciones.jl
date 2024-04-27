@@ -757,26 +757,29 @@ function deepLearning(modelHyperparameters::Dict)
 
 GC.gc()
 funcionTransferenciaCapasConvolucionales = relu;
+
+inputs = Array{Float32,3}(undef, 28*28, 1, N);
+for i in 1:N
+    inputs[:,1,i] .= reshape(train_set[:,:,1,i], 28*28);
+end;
+println("Tamaño de la matriz de entrenamiento: ", size(inputs))
+println("   Longitud de la señal: ", size(inputs,1))
+println("   Numero de canales: ", size(inputs,2))
+println("   Numero de instancias: ", size(inputs,3))
+
 # Definimos la red con la funcion Chain, que concatena distintas capas
 ann = Chain(
 
-    Conv((3, 1), 1=>16, pad=(1,1), funcionTransferenciaCapasConvolucionales),
-
-    MaxPool((2,2)),
-
-    Conv((3, 1), 16=>32, pad=(1,1), funcionTransferenciaCapasConvolucionales),
-
-    MaxPool((2,2)),
-
-    Conv((3, 1), 32=>32, pad=(1,1), funcionTransferenciaCapasConvolucionales),
-
-    MaxPool((2,2)),
-
-    # x -> reshape(x, :, size(x, 4)),
-
-    Dense(288, 10),
-
+    Conv((3,), 1=>16, pad=1, funcionTransferenciaCapasConvolucionales),
+    MaxPool((2,)),
+    Conv((3,), 16=>32, pad=1, funcionTransferenciaCapasConvolucionales),
+    MaxPool((2,)),
+    Conv((3,), 32=>32, pad=1, funcionTransferenciaCapasConvolucionales),
+    MaxPool((2,)),
+    x -> reshape(x, :, size(x, 3)),
+    Dense(3136, 10),
     softmax
+
 )
 
     # ann(train_set);
