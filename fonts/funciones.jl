@@ -511,12 +511,8 @@ function printConfusionMatrixTable(testOutputs, testTargets, classes)
     confusion_matrix = zeros(Int, num_classes, num_classes)
     # Calcular la matriz de confusión
     for i in 1:length(testOutputs)
-        println(testOutputs[i])
-        println(classes)
         predicted_class = findfirst(classes .== testOutputs[i])
         true_class = findfirst(classes .== testTargets[i])
-        println(predicted_class)
-        println(true_class)
         confusion_matrix[true_class, predicted_class] += 1
     end
     
@@ -678,12 +674,11 @@ function modelCrossValidation(modelType::Symbol, modelHyperparameters::Dict,
                 end;
     
                 # Calculamos el valor promedio de todos los entrenamientos de este fold
-
+                printConfusionMatrixTableRNA(bestTestOutputs, bestTestTargets)
                 acc = mean(testAccuraciesEachRepetition);
                 F1 = mean(testF1EachRepetition);
             end;
 
-            printConfusionMatrixTableRNA(bestTestOutputs, bestTestTargets)
             testAccuracies[numFold] = acc;
             testF1[numFold] = F1;
     
