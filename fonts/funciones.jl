@@ -742,7 +742,7 @@ end;
 
 
 function deepLearning(modelHyperparameters::Dict)
-    N = 78
+    N = 806
     datos, generos = cargar_datos("segments");
     datos_procesados = preprocesar_datos(datos);
 
@@ -791,7 +791,7 @@ ann = Chain(
     Conv((3,), 32=>32, pad=1, funcionTransferenciaCapasConvolucionales),
     MaxPool((2,)),
     x -> reshape(x, :, size(x, 3)),
-    Dense(131072, 7),
+    Dense(131072, 3),
     softmax
 );
 
