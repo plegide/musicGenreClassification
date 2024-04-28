@@ -509,11 +509,14 @@ function printConfusionMatrixTable(testOutputs, testTargets, classes)
     
     # Inicializar la matriz de confusión
     confusion_matrix = zeros(Int, num_classes, num_classes)
-    
     # Calcular la matriz de confusión
     for i in 1:length(testOutputs)
+        println(testOutputs[i])
+        println(classes)
         predicted_class = findfirst(classes .== testOutputs[i])
         true_class = findfirst(classes .== testTargets[i])
+        println(predicted_class)
+        println(true_class)
         confusion_matrix[true_class, predicted_class] += 1
     end
     
@@ -524,6 +527,20 @@ function printConfusionMatrixTable(testOutputs, testTargets, classes)
     for i in 1:num_classes
         println(classes[i], "| ", join(confusion_matrix[i, :], " | "))
     end
+end
+
+function printConfusionMatrixTableRNA(testOutputs, testTargets)
+    # Obtener el número de clases
+    # Calcular la matriz de confusión
+    TP = sum(testOutputs .& testTargets)
+    TN = sum(.!testOutputs .& .!testTargets)
+    FP = sum(testOutputs .& .!testTargets)
+    FN = sum(.!testOutputs .& testTargets)
+    println("Matriz de Confusión:")
+    println("       | Predicción Positiva | Predicción Negativa")
+    println("-------|----------------------|----------------------")
+    println("Real Positiva | ", TP, " | ", FN)
+    println("Real Negativa | ", FP, " | ", TN)
 end
 
 
@@ -593,9 +610,10 @@ function modelCrossValidation(modelType::Symbol, modelHyperparameters::Dict,
                 printConfusionMatrixTable(testOutputs, testTargets, classes)
 
             else
-    
                 # Vamos a usar RR.NN.AA.
                 @assert(modelType==:ANN);
+                bestTestOutputs = Vector{Bool}
+                bestTestTargets = Vector{Bool}
     
                 # Dividimos los datos en entrenamiento y test
                 trainingInputs = inputs[crossValidationIndices.!=numFold,:];
@@ -654,15 +672,18 @@ function modelCrossValidation(modelType::Symbol, modelHyperparameters::Dict,
                     testOutPut = [testOutPut[i] for i in 1:length(testOutPut)];
                     testTargets2 = [testTargets[i] for i in 1:length(testTargets)];
                     # Calculamos las metricas correspondientes con la funcion desarrollada en la practica anterior
+                    bestTestOutputs = testOutPut
+                    bestTestTargets = testTargets2
                     (testAccuraciesEachRepetition[numTraining], _, _, _, _, _, testF1EachRepetition[numTraining], _) = confusionMatrix(vec(testOutPut), vec(testTargets2));
                 end;
     
                 # Calculamos el valor promedio de todos los entrenamientos de este fold
+
                 acc = mean(testAccuraciesEachRepetition);
                 F1 = mean(testF1EachRepetition);
             end;
-    
-            # Almacenamos las 2 metricas que usamos en este problema
+
+            printConfusionMatrixTableRNA(bestTestOutputs, bestTestTargets)
             testAccuracies[numFold] = acc;
             testF1[numFold] = F1;
     
