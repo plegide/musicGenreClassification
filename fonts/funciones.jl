@@ -501,38 +501,30 @@ confusionMatrix(outputs::AbstractArray{Float64,1}, targets::AbstractArray{Bool,1
 
 
 
-###########################################################3
-#=
-function confusionMatrix(outputs::AbstractArray{Bool,1}, targets::AbstractArray{Bool,1})
-    VP = sum(outputs .& targets)
-    VN = sum((.~outputs) .& (.~targets))
-    FP = sum(outputs .& (.~targets))
-    FN = sum((.~outputs) .& targets)
-    return (VP=VP, VN=VN, FP=FP, FN=FN)
+
+
+function printConfusionMatrixTable(testOutputs, testTargets, classes)
+    # Obtener el número de clases
+    num_classes = length(classes)
+    
+    # Inicializar la matriz de confusión
+    confusion_matrix = zeros(Int, num_classes, num_classes)
+    
+    # Calcular la matriz de confusión
+    for i in 1:length(testOutputs)
+        predicted_class = findfirst(classes .== testOutputs[i])
+        true_class = findfirst(classes .== testTargets[i])
+        confusion_matrix[true_class, predicted_class] += 1
+    end
+    
+    # Imprimir la matriz de confusión
+    println("Matriz de Confusión:")
+    println("       | ", join(classes, " | "))
+    println("-------|", repeat("-----|", num_classes))
+    for i in 1:num_classes
+        println(classes[i], "| ", join(confusion_matrix[i, :], " | "))
+    end
 end
-
-function confusionMatrix(outputs::AbstractArray{<:Real,1}, targets::AbstractArray{Bool,1}; threshold::Real=0.5)
-    outputs_bool = classifyOutputs(outputs, threshold=threshold)
-    return confusionMatrix(outputs_bool, targets)
-end
-
-function printConfusionMatrix(outputs::AbstractArray{Bool,1}, targets::AbstractArray{Bool,1})
-    (VP, VN, FP, FN) = confusionMatrix(outputs, targets)
-    println("Matriz de confusión:")
-    println("VP: $VP")
-    println("VN: $VN")
-    println("FP: $FP")
-    println("FN: $FN")
-
-    println("Precisión: $(accuracy(outputs, targets))")
-end
-
-function printConfusionMatrix(outputs::AbstractArray{<:Real,1}, targets::AbstractArray{Bool,1}; threshold::Real=0.5)
-    outputs_bool = classifyOutputs(outputs, threshold=threshold)
-    printConfusionMatrix(outputs_bool, targets)
-end
-=#
-
 
 
 function modelCrossValidation(modelType::Symbol, modelHyperparameters::Dict, 
@@ -589,16 +581,17 @@ function modelCrossValidation(modelType::Symbol, modelHyperparameters::Dict,
                 #testOutputs = oneHotEncoding(testOutputs, unique(testOutputs))
                 #testTargets = oneHotEncoding(testTargets, unique(testTargets))
                 # bitvector to array of boolean 1 dimension
-                 #testOutputs = [testOutputs[i] for i in 1:length(testOutputs)];
-                 #testOutputs = convert(AbstractArray{Bool,1},testOutputs)
+                #testOutputs = [testOutputs[i] for i in 1:length(testOutputs)];
+                #testOutputs = convert(AbstractArray{Bool,1},testOutputs)
                  #testTargets = [testTargets[i] for i in 1:length(testTargets)];
                  #testTargets = convert(AbstractArray{Bool,1},testTargets)
                  
                  
-                # print(typeof(testOutputs))
-                # print(typeof(testTargets))
+
                 # Calculamos las metricas correspondientes con la funcion desarrollada en la practica anterior
-                (acc, _, _, _, _, _, F1, _) = confusionMatrix(testOutputs, testTargets);    
+                (acc, _, _, _, _, _, F1, _) = confusionMatrix(testOutputs, testTargets);   
+                printConfusionMatrixTable(testOutputs, testTargets, classes)
+
             else
     
                 # Vamos a usar RR.NN.AA.
@@ -742,7 +735,7 @@ end;
 
 
 function deepLearning(modelHyperparameters::Dict)
-    N = 806
+    N = 291
     datos, generos = cargar_datos("segments");
     datos_procesados = preprocesar_datos(datos);
 
@@ -781,17 +774,17 @@ println("   Numero de canales: ", size(inputs,2))
 println("   Numero de instancias: ", size(inputs,3))
 
 GC.gc()
-funcionTransferenciaCapasConvolucionales = relu;
+funcionTransferenciaCapasConvolucionales = sigmoid;
 # Definimos la red con la funcion Chain, que concatena distintas capas
 ann = Chain(
-    Conv((3,), 1=>16, pad=1, funcionTransferenciaCapasConvolucionales),
+    Conv((6,), 1=>16, pad=1, funcionTransferenciaCapasConvolucionales),
     MaxPool((2,)),
-    Conv((3,), 16=>32, pad=1, funcionTransferenciaCapasConvolucionales),
+    Conv((6,), 16=>32, pad=1, funcionTransferenciaCapasConvolucionales),
     MaxPool((2,)),
-    Conv((3,), 32=>32, pad=1, funcionTransferenciaCapasConvolucionales),
+    Conv((6,), 32=>32, pad=1, funcionTransferenciaCapasConvolucionales),
     MaxPool((2,)),
     x -> reshape(x, :, size(x, 3)),
-    Dense(131072, 3),
+    Dense(130976, 7),
     softmax
 );
 
