@@ -742,7 +742,7 @@ end;
 
 
 function deepLearning(modelHyperparameters::Dict)
-    N = 2240
+    N = 78
     datos, generos = cargar_datos("segments");
     datos_procesados = preprocesar_datos(datos);
 
@@ -756,25 +756,22 @@ function deepLearning(modelHyperparameters::Dict)
     trainingTargets2 = generos[trainingIndices,:];
     testTargets = generos[testIndices,:];
 
-    # train_set = (trainingInputs, trainingTargets);
-    test_set = (testInputs, testTargets);
 
-    
     trainingTargets = oneHotEncoding(vec(trainingTargets2));
+    testTargets = oneHotEncoding(vec(testTargets));
 
 
 inputs = Array{Float32,3}(undef, size(trainingInputs[1], 1), 1, N);
 for i in 1:N
     inputs[:, :, i] = reshape(trainingInputs[i], (length(trainingInputs[i]),1))
 end;
-    print(typeof(trainingTargets))
     train_set = (inputs, trainingTargets);
-    print(size(train_set[1]))
-    print("\n")
-    print(size(train_set[2]))
-    print("\n")
-    print(typeof(train_set[2]))
 
+testInputArr = Array{Float32,3}(undef, size(testInputs[1], 1), 1, size(testInputs, 1));
+for i in 1:size(testInputs, 1)
+    testInputArr[:, :, i] = reshape(testInputs[i], (length(testInputs[i]),1))
+end;
+    test_set = (testInputArr, testTargets);
 
 
 print(size(inputs))
@@ -785,7 +782,6 @@ println("   Numero de instancias: ", size(inputs,3))
 
 GC.gc()
 funcionTransferenciaCapasConvolucionales = relu;
-
 # Definimos la red con la funcion Chain, que concatena distintas capas
 ann = Chain(
     Conv((3,), 1=>16, pad=1, funcionTransferenciaCapasConvolucionales),
@@ -795,7 +791,7 @@ ann = Chain(
     Conv((3,), 32=>32, pad=1, funcionTransferenciaCapasConvolucionales),
     MaxPool((2,)),
     x -> reshape(x, :, size(x, 3)),
-    Dense(131072, 1),
+    Dense(131072, 7),
     softmax
 );
 
@@ -804,7 +800,7 @@ ann = Chain(
     # Definimos la funcion de loss de forma similar a las prácticas de la asignatura
     loss(ann, x, y) = (size(y,1) == 1) ? Losses.binarycrossentropy(ann(x),y) : Losses.crossentropy(ann(x),y);
     # loss(ann, train_set[1], train_set[2]);
-    accuracy(batch) = mean(onecold(ann(batch[1])) .== onecold(batch[2]));
+    accuracy(batch) = mean(onecold(ann(batch[1])) .== onecold(batch[2]'));
     # Un batch es una tupla (entradas, salidasDeseadas), asi que batch[1] son las entradas, y batch[2] son las salidas deseadas
 
     println("Ciclo 0: Precision en el conjunto de entrenamiento: ", accuracy(train_set) , " %");
@@ -814,13 +810,13 @@ ann = Chain(
 
     println("Comenzando entrenamiento...")
 
-    mejorPrecision = -Inf;
     criterioFin = false;
+    mejorPrecision = -Inf;
     numCiclo = 0;
     numCicloUltimaMejora = 0;
     mejorModelo = nothing;
-
     while !criterioFin
+        
         # Hay que declarar las variables globales que van a ser modificadas en el interior del bucle
         # global numCicloUltimaMejora, numCiclo, mejorPrecision, mejorModelo, criterioFin;
 
@@ -832,20 +828,20 @@ ann = Chain(
         println("Ciclo ", numCiclo, ": Precision en el conjunto de entrenamiento: ", 100*precisionEntrenamiento, " %");
 
         # Si se mejora la precision en el conjunto de entrenamiento, se calcula la de test y se guarda el modelo
-        if (precisionEntrenamiento >= mejorPrecision)
+        if (precisionEntrenamiento > mejorPrecision)
             mejorPrecision = precisionEntrenamiento;
-            precisionTest = accuracy(train_set);
+            precisionTest = accuracy(test_set);
             println("   Mejora en el conjunto de entrenamiento -> Precision en el conjunto de test: ", 100*precisionTest, " %");
             mejorModelo = deepcopy(ann);
             numCicloUltimaMejora = numCiclo;
         end
 
         # Si no se ha mejorado en 5 ciclos, se baja la tasa de aprendizaje
-        if (numCiclo - numCicloUltimaMejora >= 5) && (opt_state.eta > 1e-6)
-            opt_state.eta /= 10.0
-            println("   No se ha mejorado en 5 ciclos, se baja la tasa de aprendizaje a ", opt_state.eta);
-            numCicloUltimaMejora = numCiclo;
-        end
+        # if (numCiclo - numCicloUltimaMejora >= 5)  && (opt_state.eta > 1e-6)
+        #     opt_state.eta /= 10.0
+        #     println("   No se ha mejorado en 5 ciclos, se baja la tasa de aprendizaje a ", opt_state.eta);
+        #     numCicloUltimaMejora = numCiclo;
+        # end
 
         # Criterios de parada:
 
