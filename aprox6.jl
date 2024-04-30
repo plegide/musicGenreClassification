@@ -11,7 +11,7 @@ Random.seed!(1);
 numFolds = 10;
 
 # Parametros principales de la RNA y del proceso de entrenamiento
-topology = [2, 1]; # Dos capas ocultas con 4 neuronas la primera y 3 la segunda
+topology = [2, 8]; # Dos capas ocultas con 4 neuronas la primera y 3 la segunda
 learningRate = 0.01; # Tasa de aprendizaje
 maxEpochs = 1000; # Numero maximo de ciclos de entrenamiento
 validationRatio = 0.2; # Porcentaje de patrones que se usaran para validacion. Puede ser 0, para no usar validacion
@@ -42,14 +42,14 @@ targets = dataset[:,11];
 normalizeMinMax!(inputs);
 
 # Entrenamos las RR.NN.AA.
-# modelHyperparameters = Dict();
-# modelHyperparameters["topology"] = topology;
-# modelHyperparameters["learningRate"] = learningRate;
-# modelHyperparameters["validationRatio"] = validationRatio;
-# modelHyperparameters["numExecutions"] = numRepetitionsAANTraining;
-# modelHyperparameters["maxEpochs"] = maxEpochs;
-# modelHyperparameters["maxEpochsVal"] = maxEpochsVal;
-# modelCrossValidation(:ANN, modelHyperparameters, inputs, targets, numFolds);
+modelHyperparameters = Dict();
+modelHyperparameters["topology"] = topology;
+modelHyperparameters["learningRate"] = learningRate;
+modelHyperparameters["validationRatio"] = validationRatio;
+modelHyperparameters["numExecutions"] = numRepetitionsAANTraining;
+modelHyperparameters["maxEpochs"] = maxEpochs;
+modelHyperparameters["maxEpochsVal"] = maxEpochsVal;
+modelCrossValidation(:ANN, modelHyperparameters, inputs, targets, numFolds);
 
 
 # # Entrenamos las SVM
@@ -65,6 +65,6 @@ normalizeMinMax!(inputs);
 # targets, numFolds);
 
 # Entrenamos los kNN
-modelCrossValidation(:kNN, Dict("numNeighbors" => numNeighbors), inputs, 
-targets, numFolds);
+# modelCrossValidation(:kNN, Dict("numNeighbors" => numNeighbors), inputs, 
+# targets, numFolds);
 

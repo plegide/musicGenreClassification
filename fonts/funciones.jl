@@ -540,6 +540,20 @@ function printConfusionMatrixTableRNA(testOutputs, testTargets)
 end
 
 
+function convert_to_binary_vector(outputs::Matrix{Float32})
+    num_samples = size(outputs, 2)
+    binary_vector = Bool[]
+    for i in 1:num_samples
+        column = outputs[:, i]
+        max_index = argmax(column)
+        binary_column = [j == max_index ? true : false for j in 1:length(column)]
+        append!(binary_vector, binary_column)
+    end
+    return binary_vector
+end
+
+
+
 function modelCrossValidation(modelType::Symbol, modelHyperparameters::Dict, 
     inputs::Array{Float32,2}, targets::Array{Any,1}, numFolds::Int64)
     
@@ -606,10 +620,9 @@ function modelCrossValidation(modelType::Symbol, modelHyperparameters::Dict,
                 printConfusionMatrixTable(testOutputs, testTargets, classes)
 
             else
+    
                 # Vamos a usar RR.NN.AA.
                 @assert(modelType==:ANN);
-                bestTestOutputs = Vector{Bool}
-                bestTestTargets = Vector{Bool}
     
                 # Dividimos los datos en entrenamiento y test
                 trainingInputs = inputs[crossValidationIndices.!=numFold,:];
@@ -662,23 +675,41 @@ function modelCrossValidation(modelType::Symbol, modelHyperparameters::Dict,
                     end;
                    
                     testOutPut = ann(testInputs')
-                    testOutPut = testOutPut .> 0.5
                     
-                    testTargets = testTargets .> 0.5
-                    testOutPut = [testOutPut[i] for i in 1:length(testOutPut)];
-                    testTargets2 = [testTargets[i] for i in 1:length(testTargets)];
+
+                    ######################
+                    testBinaryOutput = convert_to_binary_vector(testOutPut)
+                    #Lo nuevo es
+                    #testBinaryOutput = convert_to_binary_vector(testOutPut)  y la funcion q se llama
+                    #(testAccuraciesEachRepetition[numTraining], _, _, _, _, _, testF1EachRepetition[numTraining], _) = confusionMatrix(testBinaryOutput, vec(testTargets'));
+                    #######################
+
+
+                    ###################################
+                    #Lo que habia antes
+                    #testOutPut = testOutPut .> 0.5
+                    #testTargets = testTargets .> 0.5
+                    #testOutPut = [testOutPut[i] for i in 1:length(testOutPut)];
+                    #testTargets2 = [testTargets[i] for i in 1:length(testTargets)];
+
                     # Calculamos las metricas correspondientes con la funcion desarrollada en la practica anterior
-                    bestTestOutputs = testOutPut
-                    bestTestTargets = testTargets2
-                    (testAccuraciesEachRepetition[numTraining], _, _, _, _, _, testF1EachRepetition[numTraining], _) = confusionMatrix(vec(testOutPut), vec(testTargets2));
+                    #(testAccuraciesEachRepetition[numTraining], _, _, _, _, _, testF1EachRepetition[numTraining], _) = confusionMatrix(vec(testOutPut), vec(testTargets2));
+                    ###################################
+
+                    
+                    (testAccuraciesEachRepetition[numTraining], _, _, _, _, _, testF1EachRepetition[numTraining], _) = confusionMatrix(testBinaryOutput, vec(testTargets'));
+                    #FALTA MATRIZ DE CONFUSION 
+                    #No podemos usar la de antes porque es diferente lo que se le pasa aqui, aqui hay que pillar de los dos vectores ( testBinaryOutput, vec(testTargets') ) 
+                    # de 6 en 6 elementos (son asi: 1 0 0 0 0 0 y 0 0 1 0 0 0) para clasificar
+                    # printANNConfusionMatrix(testBinaryOutput,vec(testTargets'), classes )
                 end;
     
                 # Calculamos el valor promedio de todos los entrenamientos de este fold
-                printConfusionMatrixTableRNA(bestTestOutputs, bestTestTargets)
                 acc = mean(testAccuraciesEachRepetition);
                 F1 = mean(testF1EachRepetition);
             end;
-
+    
+            # Almacenamos las 2 metricas que usamos en este problema
             testAccuracies[numFold] = acc;
             testF1[numFold] = F1;
     
