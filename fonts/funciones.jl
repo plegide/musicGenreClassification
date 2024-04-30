@@ -778,7 +778,12 @@ function preprocesar_datos(datos)
     return espectrogramas
 end;
 
-
+criterioFin = false;
+mejorPrecision = -Inf;
+numCiclo = 0;
+numCicloUltimaMejora = 0;
+mejorModelo = nothing;
+eta = 0.01;
 
 
 function deepLearning(modelHyperparameters::Dict)
@@ -846,19 +851,14 @@ ann = Chain(
     println("Ciclo 0: Precision en el conjunto de entrenamiento: ", accuracy(train_set) , " %");
 
     # Optimizador que se usa: ADAM, con esta tasa de aprendizaje:
-    opt_state = Flux.setup(Adam(0.001), ann);
+    opt_state = Flux.setup(Adam(eta), ann);
 
     println("Comenzando entrenamiento...")
 
-    criterioFin = false;
-    mejorPrecision = -Inf;
-    numCiclo = 0;
-    numCicloUltimaMejora = 0;
-    mejorModelo = nothing;
     while !criterioFin
         
         # Hay que declarar las variables globales que van a ser modificadas en el interior del bucle
-        # global numCicloUltimaMejora, numCiclo, mejorPrecision, mejorModelo, criterioFin;
+        global numCicloUltimaMejora, numCiclo, mejorPrecision, mejorModelo, criterioFin;
 
         Flux.train!(loss, ann, [(train_set[1], train_set[2]')], opt_state);
         numCiclo += 1;
@@ -876,12 +876,13 @@ ann = Chain(
             numCicloUltimaMejora = numCiclo;
         end
 
-        # Si no se ha mejorado en 5 ciclos, se baja la tasa de aprendizaje
-        # if (numCiclo - numCicloUltimaMejora >= 5)  && (opt_state.eta > 1e-6)
-        #     opt_state.eta /= 10.0
-        #     println("   No se ha mejorado en 5 ciclos, se baja la tasa de aprendizaje a ", opt_state.eta);
-        #     numCicloUltimaMejora = numCiclo;
-        # end
+        if (numCiclo - numCicloUltimaMejora >= 5) && (eta > 1e-6)
+            global eta
+            eta /= 10.0
+            println("   No se ha mejorado la precision en el conjunto de entrenamiento en 5 ciclos, se baja la tasa de aprendizaje a ", eta);
+            adjust!(opt_state, eta)
+            numCicloUltimaMejora = numCiclo;
+        end
 
         # Criterios de parada:
 
