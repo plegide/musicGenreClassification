@@ -525,18 +525,22 @@ function printConfusionMatrixTable(testOutputs, testTargets, classes)
     end
 end
 
-function printConfusionMatrixTableRNA(testOutputs, testTargets)
-    # Obtener el número de clases
-    # Calcular la matriz de confusión
-    TP = sum(testOutputs .& testTargets)
-    TN = sum(.!testOutputs .& .!testTargets)
-    FP = sum(testOutputs .& .!testTargets)
-    FN = sum(.!testOutputs .& testTargets)
+function printANNConfusionMatrix(testOutputs, testTargets, classes)
+    num_classes = length(classes)
+    confusion_matrix = zeros(Int, num_classes, num_classes)
+    for i in 1:6:length(testOutputs)
+        actual_class_index = findnext(testOutputs, i)
+        predicted_class_index = findnext(testTargets, i)
+        if actual_class_index !== nothing && predicted_class_index !== nothing
+            confusion_matrix[actual_class_index % num_classes + 1, predicted_class_index % num_classes + 1] += 1
+        end
+    end
     println("Matriz de Confusión:")
-    println("       | Predicción Positiva | Predicción Negativa")
-    println("-------|----------------------|----------------------")
-    println("Real Positiva | ", TP, " | ", FN)
-    println("Real Negativa | ", FP, " | ", TN)
+    println("       | ", join(classes, " | "))
+    println("-------|", repeat("-----|", num_classes))
+    for i in 1:num_classes
+        println(classes[i], "| ", join(confusion_matrix[i, :], " | "))
+    end
 end
 
 
@@ -696,14 +700,14 @@ function modelCrossValidation(modelType::Symbol, modelHyperparameters::Dict,
                     #(testAccuraciesEachRepetition[numTraining], _, _, _, _, _, testF1EachRepetition[numTraining], _) = confusionMatrix(vec(testOutPut), vec(testTargets2));
                     ###################################
 
-                    
                     (testAccuraciesEachRepetition[numTraining], _, _, _, _, _, testF1EachRepetition[numTraining], _) = confusionMatrix(testBinaryOutput, vec(testTargets'));
+                    printANNConfusionMatrix(testBinaryOutput,vec(testTargets'), classes )
+
                     #FALTA MATRIZ DE CONFUSION 
                     #No podemos usar la de antes porque es diferente lo que se le pasa aqui, aqui hay que pillar de los dos vectores ( testBinaryOutput, vec(testTargets') ) 
                     # de 6 en 6 elementos (son asi: 1 0 0 0 0 0 y 0 0 1 0 0 0) para clasificar
-                    # printANNConfusionMatrix(testBinaryOutput,vec(testTargets'), classes )
+                    
                 end;
-    
                 # Calculamos el valor promedio de todos los entrenamientos de este fold
                 acc = mean(testAccuraciesEachRepetition);
                 F1 = mean(testF1EachRepetition);
