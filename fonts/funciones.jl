@@ -2,6 +2,7 @@ using Flux, DelimitedFiles, Plots, ProgressMeter, Random, Statistics, WAV, FFTW
 using Flux
 using Flux.Losses
 using Flux: onehotbatch, onecold
+using Flux: adjust!
 #Práctica 2
 function oneHotEncoding(feature::AbstractArray{<:Any,1}, classes::AbstractArray{<:Any,1})
     numClasses = length(classes)
@@ -856,17 +857,17 @@ println("   Numero de canales: ", size(inputs,2))
 println("   Numero de instancias: ", size(inputs,3))
 
 GC.gc()
-funcionTransferenciaCapasConvolucionales = sigmoid;
+funcionTransferenciaCapasConvolucionales = relu;
 # Definimos la red con la funcion Chain, que concatena distintas capas
 ann = Chain(
-    Conv((6,), 1=>16, pad=1, funcionTransferenciaCapasConvolucionales),
+    Conv((3,), 1=>16, pad=1, funcionTransferenciaCapasConvolucionales),
     MaxPool((2,)),
-    Conv((6,), 16=>32, pad=1, funcionTransferenciaCapasConvolucionales),
+    Conv((3,), 16=>32, pad=1, funcionTransferenciaCapasConvolucionales),
     MaxPool((2,)),
-    Conv((6,), 32=>32, pad=1, funcionTransferenciaCapasConvolucionales),
+    Conv((3,), 32=>32, pad=1, funcionTransferenciaCapasConvolucionales),
     MaxPool((2,)),
     x -> reshape(x, :, size(x, 3)),
-    Dense(130976, 7),
+    Dense(131072, 7),
     softmax
 );
 

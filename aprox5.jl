@@ -42,14 +42,14 @@ targets = dataset[:,11];
 normalizeMinMax!(inputs);
 
 # Entrenamos las RR.NN.AA.
-# modelHyperparameters = Dict();
-# modelHyperparameters["topology"] = topology;
-# modelHyperparameters["learningRate"] = learningRate;
-# modelHyperparameters["validationRatio"] = validationRatio;
-# modelHyperparameters["numExecutions"] = numRepetitionsAANTraining;
-# modelHyperparameters["maxEpochs"] = maxEpochs;
-# modelHyperparameters["maxEpochsVal"] = maxEpochsVal;
-# modelCrossValidation(:ANN, modelHyperparameters, inputs, targets, numFolds);
+modelHyperparameters = Dict();
+modelHyperparameters["topology"] = topology;
+modelHyperparameters["learningRate"] = learningRate;
+modelHyperparameters["validationRatio"] = validationRatio;
+modelHyperparameters["numExecutions"] = numRepetitionsAANTraining;
+modelHyperparameters["maxEpochs"] = maxEpochs;
+modelHyperparameters["maxEpochsVal"] = maxEpochsVal;
+modelCrossValidation(:ANN, modelHyperparameters, inputs, targets, numFolds);
 
 
 # # Entrenamos las SVM
@@ -65,6 +65,6 @@ normalizeMinMax!(inputs);
 # targets, numFolds);
 
 # Entrenamos los kNN
-modelCrossValidation(:kNN, Dict("numNeighbors" => numNeighbors), inputs, 
-targets, numFolds);
+# modelCrossValidation(:kNN, Dict("numNeighbors" => numNeighbors), inputs, 
+# targets, numFolds);
 
