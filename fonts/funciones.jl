@@ -832,27 +832,29 @@ function deepLearning(modelHyperparameters::Dict)
 
     (trainingIndices, testIndices) = holdOut(size(datos_procesados_matrix,1), 0.2);
     # Dividimos los datos
-    trainingInputs = datos_procesados[trainingIndices,:];
-    testInputs = datos_procesados[testIndices,:];
-    trainingTargets2 = generos[trainingIndices,:];
-    testTargets = generos[testIndices,:];
-
-
-    trainingTargets = oneHotEncoding(vec(trainingTargets2));
-    testTargets = oneHotEncoding(vec(testTargets));
-
-
-inputs = Array{Float32,3}(undef, size(trainingInputs[1], 1), 1, N);
-for i in 1:N
-    inputs[:, :, i] = reshape(trainingInputs[i], (length(trainingInputs[i]),1))
-end;
-    train_set = (inputs, trainingTargets);
-
-testInputArr = Array{Float32,3}(undef, size(testInputs[1], 1), 1, size(testInputs, 1));
-for i in 1:size(testInputs, 1)
-    testInputArr[:, :, i] = reshape(testInputs[i], (length(testInputs[i]),1))
-end;
-    test_set = (testInputArr, testTargets);
+    # Preparing training inputs and targets
+    trainingInputs = [datos_procesados_matrix[i, :] for i in trainingIndices]
+    testInputs = [datos_procesados_matrix[i, :] for i in testIndices]
+    trainingTargets2 = generos[trainingIndices, :]
+    testTargets = generos[testIndices, :]
+    
+    # One-hot encoding the targets
+    trainingTargets = oneHotEncoding(vec(trainingTargets2))
+    testTargets = oneHotEncoding(vec(testTargets))
+    
+    # Reshaping training inputs
+    inputs = Array{Float32, 3}(undef, size(first(trainingInputs), 1), 1, length(trainingInputs))
+    for i in eachindex(trainingInputs)
+        inputs[:, :, i] = reshape(trainingInputs[i], :, 1)
+    end
+    train_set = (inputs, trainingTargets)
+    
+    # Reshaping test inputs
+    testInputArr = Array{Float32, 3}(undef, size(first(testInputs), 1), 1, length(testInputs))
+    for i in eachindex(testInputs)
+        testInputArr[:, :, i] = reshape(testInputs[i], :, 1)
+    end
+    test_set = (testInputArr, testTargets)
 
 
 print(size(inputs))
@@ -865,14 +867,14 @@ GC.gc()
 funcionTransferenciaCapasConvolucionales = relu;
 # Definimos la red con la funcion Chain, que concatena distintas capas
 ann = Chain(
-    Conv((4,), 1=>16, pad=1, funcionTransferenciaCapasConvolucionales),
+    Conv((6,), 1=>16, pad=1, funcionTransferenciaCapasConvolucionales),
     MaxPool((2,)),
-    Conv((4,), 16=>32, pad=1, funcionTransferenciaCapasConvolucionales),
+    Conv((6,), 16=>32, pad=1, funcionTransferenciaCapasConvolucionales),
     MaxPool((2,)),
-    Conv((4,), 32=>32, pad=1, funcionTransferenciaCapasConvolucionales),
+    Conv((6,), 32=>32, pad=1, funcionTransferenciaCapasConvolucionales),
     MaxPool((2,)),
     x -> reshape(x, :, size(x, 3)),
-    Dense(131040, 7),
+    Dense(130976, 7),
     softmax
 );
 
@@ -884,9 +886,9 @@ ann = Chain(
     function accuracy(batch)  
 
         #mean(onecold(ann(batch[1])) .== onecold(batch[2]')); 
-        println(batch[2]')
-        println(onecold(ann(batch[1])))
-        println(onecold(batch[2]'))
+        # println(batch[2]')
+        # println(onecold(ann(batch[1])))
+        # println(onecold(batch[2]'))
         return mean(onecold(ann(batch[1])) .== onecold(batch[2]')); 
     end;
     # Un batch es una tupla (entradas, salidasDeseadas), asi que batch[1] son las entradas, y batch[2] son las salidas deseadas
