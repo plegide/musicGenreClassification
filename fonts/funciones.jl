@@ -835,12 +835,15 @@ function deepLearning(modelHyperparameters::Dict)
     # Preparing training inputs and targets
     trainingInputs = [datos_procesados_matrix[i, :] for i in trainingIndices]
     testInputs = [datos_procesados_matrix[i, :] for i in testIndices]
+    # validationInputs = [datos_procesados_matrix[i, :] for i in validationIndices]
     trainingTargets2 = generos[trainingIndices, :]
     testTargets = generos[testIndices, :]
+    # validationTargets = generos[validationIndices, :]
     
     # One-hot encoding the targets
     trainingTargets = oneHotEncoding(vec(trainingTargets2))
     testTargets = oneHotEncoding(vec(testTargets))
+    # validationTargets = oneHotEncoding(vec(validationTargets))
     
     # Reshaping training inputs
     inputs = Array{Float32, 3}(undef, size(first(trainingInputs), 1), 1, length(trainingInputs))
@@ -856,6 +859,12 @@ function deepLearning(modelHyperparameters::Dict)
     end
     test_set = (testInputArr, testTargets)
 
+    # Reshaping validation inputs
+    # validationInputArr = Array{Float32, 3}(undef, size(first(validationInputs), 1), 1, length(validationInputs))
+    # for i in eachindex(validationInputs)
+    #     validationInputArr[:, :, i] = reshape(validationInputs[i], :, 1)
+    # end
+
 
 print(size(inputs))
 println("Tamaño de la matriz de entrenamiento: ", size(inputs))
@@ -867,14 +876,14 @@ GC.gc()
 funcionTransferenciaCapasConvolucionales = relu;
 # Definimos la red con la funcion Chain, que concatena distintas capas
 ann = Chain(
-    Conv((6,), 1=>16, pad=1, funcionTransferenciaCapasConvolucionales),
+    Conv((3,), 1=>16, pad=1, funcionTransferenciaCapasConvolucionales),
     MaxPool((2,)),
-    Conv((6,), 16=>32, pad=1, funcionTransferenciaCapasConvolucionales),
+    Conv((3,), 16=>32, pad=1, funcionTransferenciaCapasConvolucionales),
     MaxPool((2,)),
-    Conv((6,), 32=>32, pad=1, funcionTransferenciaCapasConvolucionales),
+    Conv((3,), 32=>32, pad=1, funcionTransferenciaCapasConvolucionales),
     MaxPool((2,)),
     x -> reshape(x, :, size(x, 3)),
-    Dense(130976, 7),
+    Dense(131072, 7),
     softmax
 );
 
