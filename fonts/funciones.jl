@@ -820,10 +820,15 @@ eta = 0.01;
 function deepLearning(modelHyperparameters::Dict)
     N = 291
     datos, generos = cargar_datos("segments");
+
     datos_procesados = preprocesar_datos(datos);
+    println(typeof(datos_procesados))
 
     datos_procesados_matrix = reduce(vcat, [x' for x in datos_procesados])
     normalizeMinMax!(datos_procesados_matrix);
+    
+    #println(size(datos_procesados_matrix))
+    #println(typeof(datos_procesados_matrix))
 
     (trainingIndices, testIndices) = holdOut(size(datos_procesados_matrix,1), 0.2);
     # Dividimos los datos
@@ -876,7 +881,14 @@ ann = Chain(
     # Definimos la funcion de loss de forma similar a las prácticas de la asignatura
     loss(ann, x, y) = (size(y,1) == 1) ? Losses.binarycrossentropy(ann(x),y) : Losses.crossentropy(ann(x),y);
     # loss(ann, train_set[1], train_set[2]);
-    accuracy(batch) = mean(onecold(ann(batch[1])) .== onecold(batch[2]'));
+    function accuracy(batch)  
+
+        #mean(onecold(ann(batch[1])) .== onecold(batch[2]')); 
+        println(batch[2]')
+        println(onecold(ann(batch[1])))
+        println(onecold(batch[2]'))
+        return mean(onecold(ann(batch[1])) .== onecold(batch[2]')); 
+    end;
     # Un batch es una tupla (entradas, salidasDeseadas), asi que batch[1] son las entradas, y batch[2] son las salidas deseadas
 
     println("Ciclo 0: Precision en el conjunto de entrenamiento: ", accuracy(train_set) , " %");
@@ -890,10 +902,8 @@ ann = Chain(
         
         # Hay que declarar las variables globales que van a ser modificadas en el interior del bucle
         global numCicloUltimaMejora, numCiclo, mejorPrecision, mejorModelo, criterioFin;
-
         Flux.train!(loss, ann, [(train_set[1], train_set[2]')], opt_state);
         numCiclo += 1;
-
         # Se calcula la precision en el conjunto de entrenamiento:
         precisionEntrenamiento = mean(accuracy(train_set));
         println("Ciclo ", numCiclo, ": Precision en el conjunto de entrenamiento: ", 100*precisionEntrenamiento, " %");
