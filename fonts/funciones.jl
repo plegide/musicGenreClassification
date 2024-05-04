@@ -860,18 +860,18 @@ GC.gc()
 funcionTransferenciaCapasConvolucionales = relu;
 # Definimos la red con la funcion Chain, que concatena distintas capas
 ann = Chain(
-    Conv((3,), 1=>16, pad=1, funcionTransferenciaCapasConvolucionales),
+    Conv((4,), 1=>16, pad=1, funcionTransferenciaCapasConvolucionales),
     MaxPool((2,)),
-    Conv((3,), 16=>32, pad=1, funcionTransferenciaCapasConvolucionales),
+    Conv((4,), 16=>32, pad=1, funcionTransferenciaCapasConvolucionales),
     MaxPool((2,)),
-    Conv((3,), 32=>32, pad=1, funcionTransferenciaCapasConvolucionales),
+    Conv((4,), 32=>32, pad=1, funcionTransferenciaCapasConvolucionales),
     MaxPool((2,)),
     x -> reshape(x, :, size(x, 3)),
-    Dense(131072, 7),
+    Dense(131040, 7),
     softmax
 );
 
-    ann(inputs);
+    # ann(inputs);
 
     # Definimos la funcion de loss de forma similar a las prácticas de la asignatura
     loss(ann, x, y) = (size(y,1) == 1) ? Losses.binarycrossentropy(ann(x),y) : Losses.crossentropy(ann(x),y);
@@ -879,7 +879,7 @@ ann = Chain(
     accuracy(batch) = mean(onecold(ann(batch[1])) .== onecold(batch[2]'));
     # Un batch es una tupla (entradas, salidasDeseadas), asi que batch[1] son las entradas, y batch[2] son las salidas deseadas
 
-    println("Ciclo 0: Precision en el conjunto de entrenamiento: ", accuracy(train_set) , " %");
+    println("Ciclo 0: Precision en el conjunto de entrenamiento: ", 100*accuracy(train_set) , " %");
 
     # Optimizador que se usa: ADAM, con esta tasa de aprendizaje:
     opt_state = Flux.setup(Adam(eta), ann);
@@ -895,7 +895,7 @@ ann = Chain(
         numCiclo += 1;
 
         # Se calcula la precision en el conjunto de entrenamiento:
-        precisionEntrenamiento = mean(accuracy(train_set));
+        precisionEntrenamiento = accuracy(train_set);
         println("Ciclo ", numCiclo, ": Precision en el conjunto de entrenamiento: ", 100*precisionEntrenamiento, " %");
 
         # Si se mejora la precision en el conjunto de entrenamiento, se calcula la de test y se guarda el modelo
