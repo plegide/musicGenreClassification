@@ -16,7 +16,7 @@ learningRate = 0.01; # Tasa de aprendizaje
 maxEpochs = 1000; # Numero maximo de ciclos de entrenamiento
 validationRatio = 0.2; # Porcentaje de patrones que se usaran para validacion. Puede ser 0, para no usar validacion
 maxEpochsVal = 20; # Numero de ciclos en los que si no se mejora el loss en el conjunto de validacion, se para el entrenamiento
-numRepetitionsAANTraining = 20; # Numero de veces que se va a entrenar la RNA para cada fold por el hecho de ser no determinístico el entrenamiento
+numRepetitionsAANTraining = 50; # Numero de veces que se va a entrenar la RNA para cada fold por el hecho de ser no determinístico el entrenamiento
 
 # Parametros del SVM
 kernel = "sigmoid";

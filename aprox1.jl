@@ -11,12 +11,12 @@ Random.seed!(1);
 numFolds = 10;
 
 # Parametros principales de la RNA y del proceso de entrenamiento
-topology = [60,40]; # Dos capas ocultas con 4 neuronas la primera y 3 la segunda
+topology = [3]; # Dos capas ocultas con 4 neuronas la primera y 3 la segunda
 learningRate = 0.01; # Tasa de aprendizaje
 maxEpochs = 1000; # Numero maximo de ciclos de entrenamiento
 validationRatio = 0.2; # Porcentaje de patrones que se usaran para validacion. Puede ser 0, para no usar validacion
 maxEpochsVal = 20; # Numero de ciclos en los que si no se mejora el loss en el conjunto de validacion, se para el entrenamiento
-numRepetitionsAANTraining = 20; # Numero de veces que se va a entrenar la RNA para cada fold por el hecho de ser no determinístico el entrenamiento
+numRepetitionsAANTraining = 50; # Numero de veces que se va a entrenar la RNA para cada fold por el hecho de ser no determinístico el entrenamiento
 
 # Parametros del SVM
 kernel = "rbf";
@@ -28,7 +28,7 @@ C=1;
 maxDepth = 1;
 
 # Parapetros de kNN
-numNeighbors = 3;
+numNeighbors = 9;
 
 # Cargamos el dataset
 dataset = readdlm("datasets/classicOrMetal/classicOrMetal.data",',');

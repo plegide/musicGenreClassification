@@ -528,7 +528,7 @@ end
 function printANNConfusionMatrix(testOutputs, testTargets, classes)
     num_classes = length(classes)
     confusion_matrix = zeros(Int, num_classes, num_classes)
-    for i in 1:6:length(testOutputs)
+    for i in 1:num_classes:length(testOutputs)
         actual_class_index = findnext(testOutputs, i)
         predicted_class_index = findnext(testTargets, i)
         if actual_class_index !== nothing && predicted_class_index !== nothing
@@ -679,14 +679,31 @@ function modelCrossValidation(modelType::Symbol, modelHyperparameters::Dict,
                     end;
                    
                     testOutPut = ann(testInputs')
-                    
+
+  
 
                     ######################
-                    testBinaryOutput = convert_to_binary_vector(testOutPut)
+                    #testBinaryOutput = convert_to_binary_vector(testOutPut)
+                    #println(size(testBinaryOutput))
+                    #println(testBinaryOutput)
+                    #println(testTargets)
                     #Lo nuevo es
                     #testBinaryOutput = convert_to_binary_vector(testOutPut)  y la funcion q se llama
                     #(testAccuraciesEachRepetition[numTraining], _, _, _, _, _, testF1EachRepetition[numTraining], _) = confusionMatrix(testBinaryOutput, vec(testTargets'));
                     #######################
+
+                    if length(classes) == 2
+                        testOutPut = testOutPut .> 0.5
+                        testTargets = testTargets .> 0.5
+                        testOutPut = [testOutPut[i] for i in 1:length(testOutPut)];
+                        testTargets2 = [testTargets[i] for i in 1:length(testTargets)];
+                        
+                        (testAccuraciesEachRepetition[numTraining], _, _, _, _, _, testF1EachRepetition[numTraining], _) = confusionMatrix(vec(testOutPut), vec(testTargets2));
+                    else
+                        testBinaryOutput = convert_to_binary_vector(testOutPut)
+                        (testAccuraciesEachRepetition[numTraining], _, _, _, _, _, testF1EachRepetition[numTraining], _) = confusionMatrix(testBinaryOutput, vec(testTargets'));
+                        printANNConfusionMatrix(testBinaryOutput,vec(testTargets'), classes )
+                    end;
 
 
                     ###################################
@@ -700,8 +717,8 @@ function modelCrossValidation(modelType::Symbol, modelHyperparameters::Dict,
                     #(testAccuraciesEachRepetition[numTraining], _, _, _, _, _, testF1EachRepetition[numTraining], _) = confusionMatrix(vec(testOutPut), vec(testTargets2));
                     ###################################
 
-                    (testAccuraciesEachRepetition[numTraining], _, _, _, _, _, testF1EachRepetition[numTraining], _) = confusionMatrix(testBinaryOutput, vec(testTargets'));
-                    printANNConfusionMatrix(testBinaryOutput,vec(testTargets'), classes )
+                    #(testAccuraciesEachRepetition[numTraining], _, _, _, _, _, testF1EachRepetition[numTraining], _) = confusionMatrix(testBinaryOutput, vec(testTargets'));
+                    #printANNConfusionMatrix(testBinaryOutput,vec(testTargets'), classes )
 
                     #FALTA MATRIZ DE CONFUSION 
                     #No podemos usar la de antes porque es diferente lo que se le pasa aqui, aqui hay que pillar de los dos vectores ( testBinaryOutput, vec(testTargets') ) 
