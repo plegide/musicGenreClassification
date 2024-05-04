@@ -633,21 +633,16 @@ function modelCrossValidation(modelType::Symbol, modelHyperparameters::Dict,
                 testInputs = inputs[crossValidationIndices.==numFold,:];
                 trainingTargets = targets[crossValidationIndices.!=numFold,:];
                 testTargets = targets[crossValidationIndices.==numFold,:];
+
+                tT = nothing
+                tO = nothing
     
                 # Como el entrenamiento de RR.NN.AA. es no determinístico, hay que entrenar varias veces, y
                 # se crean vectores adicionales para almacenar las metricas para cada entrenamiento
                 testAccuraciesEachRepetition = Array{Float64,1}(undef, modelHyperparameters["numExecutions"]);
                 testF1EachRepetition = Array{Float64,1}(undef, modelHyperparameters["numExecutions"]);
-    
-                # Se entrena las veces que se haya indicado
-                for numTraining in 1:modelHyperparameters["numExecutions"]
-    
-                    if modelHyperparameters["validationRatio"]>0
-    
-                        # Para el caso de entrenar una RNA con conjunto de validacion, hacemos una división adicional:
-                        # dividimos el conjunto de entrenamiento en entrenamiento+validacion
-                        # Para ello, hacemos un hold out
-                        (trainingIndices, validationIndices) = holdOut(size(trainingInputs,1), modelHyperparameters["validationRatio"]*size(trainingInputs,1)/size(inputs,1));
+
+                (trainingIndices, validationIndices) = holdOut(size(trainingInputs,1), modelHyperparameters["validationRatio"]*size(trainingInputs,1)/size(inputs,1));
                         validationInputs = trainingInputs[validationIndices,:];
                         validationTargets = trainingTargets[validationIndices,:];
                         trainingInputs = trainingInputs[trainingIndices,:];
@@ -657,6 +652,16 @@ function modelCrossValidation(modelType::Symbol, modelHyperparameters::Dict,
                         # ann, = trainClassANN(modelHyperparameters["topology"], trainingDataset=(trainingInputs[trainingIndices,:]', trainingTargets[trainingIndices,:]'), validationDataset=(trainingInputs[validationIndices,:]', trainingTargets[validationIndices,:]'), testDataset=(testInputs[1,:]', Matrix{Float32}(reshape(testTargets[1,:], 1, :))), maxEpochs=modelHyperparameters["maxEpochs"], learningRate=modelHyperparameters["learningRate"]);
                         testInputsMatrix = Matrix{Float32}(testInputs[1, :]')  # Convertir las entradas a tipo Float32
                         testTargetsMatrix = Matrix{Bool}(reshape(testTargets[1, :], 1, :))
+    
+                # Se entrena las veces que se haya indicado
+                for numTraining in 1:modelHyperparameters["numExecutions"]
+    
+                    if modelHyperparameters["validationRatio"]>0
+    
+                        # Para el caso de entrenar una RNA con conjunto de validacion, hacemos una división adicional:
+                        # dividimos el conjunto de entrenamiento en entrenamiento+validacion
+                        # Para ello, hacemos un hold out
+                        
                         ann, = trainClassANN(modelHyperparameters["topology"],
                             (trainingInputs', trainingTargets'),
                             validationDataset=(validationInputs', validationTargets'),
@@ -702,7 +707,8 @@ function modelCrossValidation(modelType::Symbol, modelHyperparameters::Dict,
                     else
                         testBinaryOutput = convert_to_binary_vector(testOutPut)
                         (testAccuraciesEachRepetition[numTraining], _, _, _, _, _, testF1EachRepetition[numTraining], _) = confusionMatrix(testBinaryOutput, vec(testTargets'));
-                        printANNConfusionMatrix(testBinaryOutput,vec(testTargets'), classes )
+                        tO = testBinaryOutput
+                        tT = vec(testTargets')
                     end;
 
 
@@ -726,6 +732,9 @@ function modelCrossValidation(modelType::Symbol, modelHyperparameters::Dict,
                     
                 end;
                 # Calculamos el valor promedio de todos los entrenamientos de este fold
+                if(length(classes) != 2)
+                    printANNConfusionMatrix(tO, tT, classes)
+                end;
                 acc = mean(testAccuraciesEachRepetition);
                 F1 = mean(testF1EachRepetition);
             end;
