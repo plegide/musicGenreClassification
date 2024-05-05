@@ -31,7 +31,7 @@ maxDepth = 6;
 numNeighbors = 10;
 
 # Cargamos el dataset
-dataset = readdlm("datasets/aprox3/aprox3.3.data",',');
+dataset = readdlm("datasets/aprox3/aprox3.data",',');
 inputs = dataset[:,1:6];
 # Preparamos las entradas y las salidas deseadas
 inputs = convert(Array{Float32,2}, inputs);
