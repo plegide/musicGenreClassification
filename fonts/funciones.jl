@@ -3,7 +3,6 @@ using Flux
 using Flux.Losses
 using Flux: onehotbatch, onecold
 using Flux: adjust!
-#Práctica 2
 function oneHotEncoding(feature::AbstractArray{<:Any,1}, classes::AbstractArray{<:Any,1})
     numClasses = length(classes)
     @assert(numClasses > 1)
@@ -165,12 +164,7 @@ end;
 
 function trainClassANN(topology::AbstractArray{<:Int,1}, trainingDataset::Tuple{AbstractArray{<:Real,2}, AbstractArray{Bool,2}}; validationDataset::Tuple{AbstractArray{<:Real,2}, AbstractArray{Bool,2}}= (Array{eltype(trainingDataset[1]),2}(undef,0,0), falses(0,0)), testDataset::Tuple{AbstractArray{<:Real,2}, AbstractArray{Bool,2}}= (Array{eltype(trainingDataset[1]),2}(undef,0,0), falses(0,0)), transferFunctions::AbstractArray{<:Function,1}=fill(σ, length(topology)), maxEpochs::Int=1000, minLoss::Real=0.0, learningRate::Real=0.01, maxEpochsVal::Int=20)
     inputs, targets = trainingDataset
-    # ann = buildClassANN(size(inputs, 2), topology, size(targets, 2), transferFunctions=transferFunctions)
-    # Definicion de la topologia de la ann
     ann = buildClassANN(size(inputs', 2), topology, size(targets', 2), transferFunctions=transferFunctions)
-    # ann = Chain( 
-    # Dense(2, 4, σ), 
-    # Dense(4, 1, σ) );
     loss(model, x,y) = (size(y,1) == 1) ? Losses.binarycrossentropy(model(x),y) : Losses.crossentropy(model(x),y);
     opt_state = Flux.setup(Adam(learningRate), ann)
     train_losses = [] 
@@ -190,7 +184,7 @@ function trainClassANN(topology::AbstractArray{<:Int,1}, trainingDataset::Tuple{
         if validationDataset != (Array{eltype(trainingDataset[1]),2}(undef,0,0), falses(0,0))
             validation_loss = loss(ann, validationDataset...)
             push!(validation_losses, validation_loss)
-            
+
             if validation_loss ≤ minLoss
                 println("Pérdida mínima alcanzada después de $epoch ciclos.")
                 break
@@ -214,14 +208,8 @@ function trainClassANN(topology::AbstractArray{<:Int,1}, trainingDataset::Tuple{
 end
 
 function trainClassANN(topology::AbstractArray{<:Int,1}, trainingDataset::Tuple{AbstractArray{<:Real,2}, AbstractArray{Bool,1}}; validationDataset::Tuple{AbstractArray{<:Real,2}, AbstractArray{Bool,1}}= (Array{eltype(trainingDataset[1]),2}(undef,0,0), falses(0)), testDataset::Tuple{AbstractArray{<:Real,2}, AbstractArray{Bool,1}}= (Array{eltype(trainingDataset[1]),2}(undef,0,0), falses(0)), transferFunctions::AbstractArray{<:Function,1}=fill(σ, length(topology)), maxEpochs::Int=1000, minLoss::Real=0.0, learningRate::Real=0.01, maxEpochsVal::Int=20)
-    print("ESTE")
     inputs, targets = trainingDataset
-    # ann = buildClassANN(size(inputs, 2), topology, 1, transferFunctions=transferFunctions)
-    # Definicion de la topologia de la ann
     ann = buildClassANN(size(inputs', 2), topology, size(targets', 2), transferFunctions=transferFunctions)
-    # ann = Chain( 
-    # Dense(2, 4, σ), 
-    # Dense(4, 1, σ) );
     loss(model, x,y) = (size(y,1) == 1) ? Losses.binarycrossentropy(model(x),y) : Losses.crossentropy(model(x),y);
     opt_state = Flux.setup(Adam(learningRate), ann)
     train_losses = []
@@ -244,7 +232,6 @@ function trainClassANN(topology::AbstractArray{<:Int,1}, trainingDataset::Tuple{
         end
         if epoch % maxEpochsVal == 0
             if validation_loss < bestValLoss
-                # Este if se usa para devolver la mejor ann del entrenamiento
                 bestValLoss = validation_loss
                 bestValLossEpoch = epoch
                 bestAnn = deepcopy(ann)
@@ -817,7 +804,7 @@ mejorModelo = nothing;
 eta = 0.01;
 
 
-function deepLearning(modelHyperparameters::Dict)
+function deepLearning()
     N = 291
     datos, generos = cargar_datos("segments");
 
@@ -866,14 +853,13 @@ function deepLearning(modelHyperparameters::Dict)
     # end
 
 
-print(size(inputs))
 println("Tamaño de la matriz de entrenamiento: ", size(inputs))
 println("   Longitud de la señal: ", size(inputs,1))
 println("   Numero de canales: ", size(inputs,2))
 println("   Numero de instancias: ", size(inputs,3))
 
 GC.gc()
-funcionTransferenciaCapasConvolucionales = relu;
+funcionTransferenciaCapasConvolucionales = tanh;
 # Definimos la red con la funcion Chain, que concatena distintas capas
 ann = Chain(
     Conv((6,), 1=>16, pad=1, funcionTransferenciaCapasConvolucionales),

@@ -4,15 +4,6 @@ include("fonts/funciones.jl")
 
 Random.seed!(1);
 
-
-# Cargamos el dataset
-
-
-# Entrenamos deepLearning
-modelHyperparameters = Dict();
-# modelHyperparameters["topology"] = topology;
-
-
-deepLearning(modelHyperparameters);
+deepLearning();
 
 
