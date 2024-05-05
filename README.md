@@ -3,6 +3,7 @@
 ## Extraccion de datos (Opcional)
 
 **Este paso NO es necesario para la ejecución, podemos encontrar los archivos.data ya generados para cada aproximación en la carpeta `datasets`**
+**Para obtener los mismos resultados obtenidos en la memoria NO hace falta modificarlo**
 
 1. El dataset usado puede ser descargado en
    https://www.kaggle.com/code/andradaolteanu/work-w-audio-data-visualise-classify-recommend/input (La carpeta `genres_original`)
