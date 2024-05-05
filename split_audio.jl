@@ -44,11 +44,7 @@ for genre in readdir("genres")
         continue
     end
     println("Procesando $(genre)...")
-    cnt = 1
     for audio in readdir(joinpath("genres", genre))
-        if(cnt > 4)
-            break
-        end
         if endswith(audio, ".wav")
             try
                 dividir_audio(joinpath("genres", genre, audio), joinpath("segments", genre), 65536, 16384)
@@ -56,7 +52,6 @@ for genre in readdir("genres")
                 println("[x] Error processing $(audio)")
             end
         end
-        cnt += 1
     end
 end
 
