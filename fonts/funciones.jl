@@ -876,21 +876,25 @@ GC.gc()
 funcionTransferenciaCapasConvolucionales = relu;
 # Definimos la red con la funcion Chain, que concatena distintas capas
 ann = Chain(
-    Conv((3,), 1=>16, pad=1, funcionTransferenciaCapasConvolucionales),
+    Conv((6,), 1=>16, pad=1, funcionTransferenciaCapasConvolucionales),
     MaxPool((2,)),
-    Conv((3,), 16=>32, pad=1, funcionTransferenciaCapasConvolucionales),
+    Conv((6,), 16=>32, pad=1, funcionTransferenciaCapasConvolucionales),
     MaxPool((2,)),
-    Conv((3,), 32=>32, pad=1, funcionTransferenciaCapasConvolucionales),
+    Conv((6,), 32=>32, pad=1, funcionTransferenciaCapasConvolucionales),
     MaxPool((2,)),
     x -> reshape(x, :, size(x, 3)),
-    Dense(131072, 7),
+    Dense(130976, 7),
     softmax
 );
 
     # ann(inputs);
 
     # Definimos la funcion de loss de forma similar a las prácticas de la asignatura
-    loss(ann, x, y) = (size(y,1) == 1) ? Losses.binarycrossentropy(ann(x),y) : Losses.crossentropy(ann(x),y);
+    L1 = 0.01;
+    L2 = 0;
+    absnorm(x) = sum(abs , x)
+    sqrnorm(x) = sum(abs2, x)
+    loss(model,x,y) = ((size(y,1) == 1) ? Losses.binarycrossentropy(model(x),y) : Losses.crossentropy(model(x),y)) + L1*sum(absnorm, Flux.params(model)) + L2*sum(sqrnorm, Flux.params(model));
     # loss(ann, train_set[1], train_set[2]);
     function accuracy(batch)  
 
