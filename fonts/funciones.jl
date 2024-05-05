@@ -623,13 +623,11 @@ function cargar_datos(ruta_datos)
 end;
 
 function audioFft(audio_file_path::AbstractString)
-    # Lee el archivo de audio
     wav_data, Fs = wavread(audio_file_path)
 
     n = length(wav_data)
     senalFrecuencia = abs.(fft(wav_data));
 
-    # Coje solo la primera parte de la senal debido a que las dos mitades son simetricas
     if (iseven(n))
         @assert(mean(abs.(senalFrecuencia[2:Int(n/2)] .- senalFrecuencia[end:-1:(Int(n/2)+2)]))<1e-8);
         senalFrecuencia = senalFrecuencia[1:(Int(n/2)+1)];
@@ -641,10 +639,7 @@ function audioFft(audio_file_path::AbstractString)
 end;
 
 
-# Convertir los datos de audio a un formato adecuado para la red neuronal
 function preprocesar_datos(datos)
-    # Aquí puedes realizar cualquier preprocesamiento necesario, como extracción de características
-    # Por ejemplo, si deseas trabajar con espectrogramas de los audios:
     espectrogramas = [audioFft(audio) for audio in datos]
     return espectrogramas
 end;
@@ -667,102 +662,75 @@ function deepLearning()
     datos_procesados_matrix = reduce(vcat, [x' for x in datos_procesados])
     normalizeMinMax!(datos_procesados_matrix);
     
-    #println(size(datos_procesados_matrix))
-    #println(typeof(datos_procesados_matrix))
 
     (trainingIndices, testIndices) = holdOut(size(datos_procesados_matrix,1), 0.2);
-    # Dividimos los datos
-    # Preparing training inputs and targets
     trainingInputs = [datos_procesados_matrix[i, :] for i in trainingIndices]
     testInputs = [datos_procesados_matrix[i, :] for i in testIndices]
-    # validationInputs = [datos_procesados_matrix[i, :] for i in validationIndices]
     trainingTargets2 = generos[trainingIndices, :]
     testTargets = generos[testIndices, :]
-    # validationTargets = generos[validationIndices, :]
     
-    # One-hot encoding the targets
     trainingTargets = oneHotEncoding(vec(trainingTargets2))
     testTargets = oneHotEncoding(vec(testTargets))
-    # validationTargets = oneHotEncoding(vec(validationTargets))
     
-    # Reshaping training inputs
     inputs = Array{Float32, 3}(undef, size(first(trainingInputs), 1), 1, length(trainingInputs))
     for i in eachindex(trainingInputs)
         inputs[:, :, i] = reshape(trainingInputs[i], :, 1)
     end
     train_set = (inputs, trainingTargets)
     
-    # Reshaping test inputs
     testInputArr = Array{Float32, 3}(undef, size(first(testInputs), 1), 1, length(testInputs))
     for i in eachindex(testInputs)
         testInputArr[:, :, i] = reshape(testInputs[i], :, 1)
     end
     test_set = (testInputArr, testTargets)
 
-    # Reshaping validation inputs
-    # validationInputArr = Array{Float32, 3}(undef, size(first(validationInputs), 1), 1, length(validationInputs))
-    # for i in eachindex(validationInputs)
-    #     validationInputArr[:, :, i] = reshape(validationInputs[i], :, 1)
-    # end
 
 
-println("Tamaño de la matriz de entrenamiento: ", size(inputs))
-println("   Longitud de la señal: ", size(inputs,1))
-println("   Numero de canales: ", size(inputs,2))
-println("   Numero de instancias: ", size(inputs,3))
+    println("Tamaño de la matriz de entrenamiento: ", size(inputs))
+    println("   Longitud de la señal: ", size(inputs,1))
+    println("   Numero de canales: ", size(inputs,2))
+    println("   Numero de instancias: ", size(inputs,3))
 
-GC.gc()
-funcionTransferenciaCapasConvolucionales = tanh;
-# Definimos la red con la funcion Chain, que concatena distintas capas
-ann = Chain(
-    Conv((6,), 1=>16, pad=1, funcionTransferenciaCapasConvolucionales),
-    MaxPool((2,)),
-    Conv((6,), 16=>32, pad=1, funcionTransferenciaCapasConvolucionales),
-    MaxPool((2,)),
-    Conv((6,), 32=>32, pad=1, funcionTransferenciaCapasConvolucionales),
-    MaxPool((2,)),
-    x -> reshape(x, :, size(x, 3)),
-    Dense(130976, 7),
-    softmax
-);
+    GC.gc()
+    funcionTransferenciaCapasConvolucionales = tanh;
+    # Definimos la red con la funcion Chain, que concatena distintas capas
+    ann = Chain(
+        Conv((6,), 1=>16, pad=1, funcionTransferenciaCapasConvolucionales),
+        MaxPool((2,)),
+        Conv((6,), 16=>32, pad=1, funcionTransferenciaCapasConvolucionales),
+        MaxPool((2,)),
+        Conv((6,), 32=>32, pad=1, funcionTransferenciaCapasConvolucionales),
+        MaxPool((2,)),
+        x -> reshape(x, :, size(x, 3)),
+        Dense(130976, 7),
+        softmax
+    );
 
-    # ann(inputs);
 
-    # Definimos la funcion de loss de forma similar a las prácticas de la asignatura
     L1 = 0.01;
     L2 = 0;
     absnorm(x) = sum(abs , x)
     sqrnorm(x) = sum(abs2, x)
     loss(model,x,y) = ((size(y,1) == 1) ? Losses.binarycrossentropy(model(x),y) : Losses.crossentropy(model(x),y)) + L1*sum(absnorm, Flux.params(model)) + L2*sum(sqrnorm, Flux.params(model));
-    # loss(ann, train_set[1], train_set[2]);
-    function accuracy(batch)  
 
-        #mean(onecold(ann(batch[1])) .== onecold(batch[2]')); 
-        # println(batch[2]')
-        # println(onecold(ann(batch[1])))
-        # println(onecold(batch[2]'))
+    function accuracy(batch)  
         return mean(onecold(ann(batch[1])) .== onecold(batch[2]')); 
     end;
-    # Un batch es una tupla (entradas, salidasDeseadas), asi que batch[1] son las entradas, y batch[2] son las salidas deseadas
 
     println("Ciclo 0: Precision en el conjunto de entrenamiento: ", 100*accuracy(train_set) , " %");
 
-    # Optimizador que se usa: ADAM, con esta tasa de aprendizaje:
     opt_state = Flux.setup(Adam(eta), ann);
 
     println("Comenzando entrenamiento...")
 
     while !criterioFin
         
-        # Hay que declarar las variables globales que van a ser modificadas en el interior del bucle
         global numCicloUltimaMejora, numCiclo, mejorPrecision, mejorModelo, criterioFin;
         Flux.train!(loss, ann, [(train_set[1], train_set[2]')], opt_state);
         numCiclo += 1;
-        # Se calcula la precision en el conjunto de entrenamiento:
         precisionEntrenamiento = accuracy(train_set);
         println("Ciclo ", numCiclo, ": Precision en el conjunto de entrenamiento: ", 100*precisionEntrenamiento, " %");
 
-        # Si se mejora la precision en el conjunto de entrenamiento, se calcula la de test y se guarda el modelo
         if (precisionEntrenamiento > mejorPrecision)
             mejorPrecision = precisionEntrenamiento;
             precisionTest = accuracy(test_set);
@@ -779,15 +747,11 @@ ann = Chain(
             numCicloUltimaMejora = numCiclo;
         end
 
-        # Criterios de parada:
-
-        # Si la precision en entrenamiento es lo suficientemente buena, se para el entrenamiento
         if (precisionEntrenamiento >= 0.999)
             println("   Se para el entenamiento por haber llegado a una precision de 99.9%")
             criterioFin = true;
         end
 
-        # Si no se mejora la precision en el conjunto de entrenamiento durante 10 ciclos, se para el entrenamiento
         if (numCiclo - numCicloUltimaMejora >= 10)
             println("   Se para el entrenamiento por no haber mejorado la precision en el conjunto de entrenamiento durante 10 ciclos")
             criterioFin = true;
